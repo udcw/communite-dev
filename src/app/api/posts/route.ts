@@ -5,12 +5,24 @@ import Post from '@/models/Post';
 
 export async function GET() {
   try {
+    console.log('1. Début de la requête GET /api/posts');
+    
+    console.log('2. Tentative de connexion à MongoDB...');
     await connectDB();
+    console.log('3. Connecté à MongoDB avec succès');
+    
+    console.log('4. Recherche des posts...');
     const posts = await Post.find().sort({ createdAt: -1 }).limit(50);
+    console.log(`5. ${posts.length} posts trouvés`);
+    
     return NextResponse.json(posts);
-  } catch (error) {
-    console.error('Error fetching posts:', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+  } catch (error: any) {
+    console.error('ERREUR:', error.message);
+    console.error('Stack:', error.stack);
+    return NextResponse.json({ 
+      error: 'Internal server error',
+      details: error.message 
+    }, { status: 500 });
   }
 }
 
@@ -33,8 +45,11 @@ export async function POST(req: NextRequest) {
     });
 
     return NextResponse.json(post, { status: 201 });
-  } catch (error) {
-    console.error('Error creating post:', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+  } catch (error: any) {
+    console.error('ERREUR POST:', error.message);
+    return NextResponse.json({ 
+      error: 'Internal server error',
+      details: error.message 
+    }, { status: 500 });
   }
 }
