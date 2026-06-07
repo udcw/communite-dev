@@ -22,13 +22,27 @@ if (!global.mongoose) {
 }
 
 export async function connectDB() {
-  if (cached.conn) return cached.conn;
-  
-  if (!cached.promise) {
-    console.log('Connecting to MongoDB at:', MONGODB_URI.replace(/\/\/.*:.*@/, '//***:***@'));
-    cached.promise = mongoose.connect(MONGODB_URI).then((mongoose) => mongoose);
+  try {
+    if (cached.conn) {
+      console.log('✅ Using existing MongoDB connection');
+      return cached.conn;
+    }
+    
+    if (!cached.promise) {
+      console.log('🟡 Connecting to MongoDB at:', MONGODB_URI.replace(/\/\/.*:.*@/, '//***:***@'));
+      cached.promise = mongoose.connect(MONGODB_URI).then((mongoose) => {
+        console.log('✅ MongoDB connected successfully');
+        return mongoose;
+      }).catch((err) => {
+        console.error('❌ MongoDB connection error:', err.message);
+        throw err;
+      });
+    }
+    
+    cached.conn = await cached.promise;
+    return cached.conn;
+  } catch (error) {
+    console.error('❌ Failed to connect to MongoDB:', error);
+    throw error;
   }
-  
-  cached.conn = await cached.promise;
-  return cached.conn;
 }
