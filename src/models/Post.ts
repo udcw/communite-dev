@@ -8,6 +8,7 @@ export interface IPost {
   authorEmail: string;
   likes: number;
   likedBy: string[];
+  comments: mongoose.Types.ObjectId[];
   createdAt: Date;
   updatedAt: Date;
 }
@@ -20,6 +21,7 @@ const PostSchema = new Schema<IPost>({
   authorEmail: { type: String, required: true },
   likes: { type: Number, default: 0 },
   likedBy: [{ type: String }],
+  comments: [{ type: Schema.Types.ObjectId, ref: 'Comment', default: [] }],
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now },
 });
