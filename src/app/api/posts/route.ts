@@ -11,7 +11,7 @@ export async function GET() {
 
 export async function POST(req: NextRequest) {
   const session = await getServerSession();
-  
+
   if (!session?.user) {
     return NextResponse.json({ error: 'Non authentifié' }, { status: 401 });
   }
@@ -26,6 +26,21 @@ export async function POST(req: NextRequest) {
     authorName: session.user.name,
     authorEmail: session.user.email,
   });
+  // Dans la fonction POST, avant de créer le post :
+  
 
+  // Validation
+  if (!title || typeof title !== 'string' || title.length < 3 || title.length > 100) {
+    return NextResponse.json({ error: 'Titre invalide (3-100 caractères)' }, { status: 400 });
+  }
+
+  if (!content || typeof content !== 'string' || content.length < 10 || content.length > 5000) {
+    return NextResponse.json({ error: 'Contenu invalide (10-5000 caractères)' }, { status: 400 });
+  }
+
+  // Nettoyage basique (anti-XSS)
+  const cleanTitle = title.replace(/[<>]/g, '');
+  const cleanContent = content.replace(/[<>]/g, '');
   return NextResponse.json(post, { status: 201 });
+
 }
