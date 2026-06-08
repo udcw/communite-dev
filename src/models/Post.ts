@@ -11,6 +11,8 @@ export interface IPost {
   comments: mongoose.Types.ObjectId[];
   createdAt: Date;
   updatedAt: Date;
+imageUrl?: string;
+
 }
 
 const PostSchema = new Schema<IPost>({
@@ -24,6 +26,8 @@ const PostSchema = new Schema<IPost>({
   comments: [{ type: Schema.Types.ObjectId, ref: 'Comment', default: [] }],
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now },
+  imageUrl: { type: String, default: '' },
+
 });
 
 export default models.Post || model<IPost>('Post', PostSchema);

@@ -2,9 +2,10 @@
 
 import { useSession, signIn } from 'next-auth/react';
 import { useState, useEffect } from 'react';
-import { Sparkles, MessageCircle, Send, Loader2 } from 'lucide-react';
+import { Sparkles, MessageCircle, Send, Loader2, Image as ImageIcon } from 'lucide-react';
 import { FaGithub } from 'react-icons/fa';
 import PostCard from '@/components/PostCard';
+import ImageUpload from '@/components/ImageUpload';
 
 interface Post {
   _id: string;
@@ -14,6 +15,7 @@ interface Post {
   likes: number;
   likedBy: string[];
   createdAt: string;
+  imageUrl?: string;
 }
 
 export default function Home() {
@@ -21,6 +23,7 @@ export default function Home() {
   const [posts, setPosts] = useState<Post[]>([]);
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
+  const [imageUrl, setImageUrl] = useState('');
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
@@ -40,10 +43,11 @@ export default function Home() {
     await fetch('/api/posts', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ title, content }),
+      body: JSON.stringify({ title, content, imageUrl }),
     });
     setTitle('');
     setContent('');
+    setImageUrl('');
     setSubmitting(false);
     fetchPosts();
   };
@@ -95,7 +99,7 @@ export default function Home() {
         </div>
       </div>
 
-      {/* Formulaire de création */}
+      {/* Formulaire de création avec image */}
       <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
         <div className="p-6 border-b border-gray-200 dark:border-gray-700">
           <h2 className="text-xl font-semibold flex items-center gap-2">
@@ -120,6 +124,20 @@ export default function Home() {
             rows={4}
             required
           />
+          
+          {/* Upload d'image */}
+          <div className="border border-dashed border-gray-300 dark:border-gray-600 rounded-xl p-4">
+            <div className="flex items-center gap-2 mb-2">
+              <ImageIcon className="w-4 h-4 text-gray-500" />
+              <span className="text-sm text-gray-500">Ajouter une image (optionnel)</span>
+            </div>
+            <ImageUpload 
+              onImageUpload={setImageUrl}
+              onRemove={() => setImageUrl('')}
+              currentImage={imageUrl}
+            />
+          </div>
+
           <div className="flex justify-end">
             <button
               type="submit"
@@ -133,7 +151,7 @@ export default function Home() {
         </form>
       </div>
 
-      {/* Liste des posts avec PostCard (avec commentaires) */}
+      {/* Liste des posts avec images */}
       <div className="space-y-4">
         {loading ? (
           <div className="flex justify-center py-12">

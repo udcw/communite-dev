@@ -17,17 +17,8 @@ export async function POST(req: NextRequest) {
   }
 
   await connectDB();
-  const { title, content } = await req.json();
-
-  const post = await Post.create({
-    title,
-    content,
-    authorId: session.user.email,
-    authorName: session.user.name,
-    authorEmail: session.user.email,
-  });
-  // Dans la fonction POST, avant de créer le post :
-  
+  const body = await req.json();
+  const { title, content, imageUrl } = body;
 
   // Validation
   if (!title || typeof title !== 'string' || title.length < 3 || title.length > 100) {
@@ -41,6 +32,16 @@ export async function POST(req: NextRequest) {
   // Nettoyage basique (anti-XSS)
   const cleanTitle = title.replace(/[<>]/g, '');
   const cleanContent = content.replace(/[<>]/g, '');
-  return NextResponse.json(post, { status: 201 });
+  const cleanImageUrl = imageUrl?.replace(/[<>]/g, '') || '';
 
+  const post = await Post.create({
+    title: cleanTitle,
+    content: cleanContent,
+    imageUrl: cleanImageUrl,
+    authorId: session.user.email,
+    authorName: session.user.name,
+    authorEmail: session.user.email,
+  });
+
+  return NextResponse.json(post, { status: 201 });
 }

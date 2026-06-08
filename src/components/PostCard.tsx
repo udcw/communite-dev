@@ -13,6 +13,7 @@ interface PostCardProps {
     likes: number;
     likedBy: string[];
     createdAt: string;
+    imageUrl?: string;
   };
   userId: string;
   onLike: (id: string) => void;
@@ -33,6 +34,18 @@ export default function PostCard({ post, userId, onLike }: PostCardProps) {
         <h3 className="text-xl font-bold text-gray-800 dark:text-white mb-2 line-clamp-2">
           {post.title}
         </h3>
+        
+        {/* Image du post (si présente) */}
+        {post.imageUrl && (
+          <div className="mb-4 rounded-lg overflow-hidden">
+            <img 
+              src={post.imageUrl} 
+              alt={post.title}
+              className="w-full max-h-96 object-cover rounded-lg"
+            />
+          </div>
+        )}
+        
         <p className="text-gray-600 dark:text-gray-300 mb-4 leading-relaxed">
           {post.content}
         </p>
