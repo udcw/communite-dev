@@ -1,9 +1,11 @@
 'use client';
 
-import { useSession,signIn  } from 'next-auth/react';
+import { useSession, signIn } from 'next-auth/react';
 import { useState, useEffect } from 'react';
-import { Sparkles, MessageCircle, Heart, User, Calendar, Send, Loader2 } from 'lucide-react';
+import { Sparkles, MessageCircle, Send, Loader2 } from 'lucide-react';
 import { FaGithub } from 'react-icons/fa';
+import PostCard from '@/components/PostCard';
+
 interface Post {
   _id: string;
   title: string;
@@ -67,13 +69,13 @@ export default function Home() {
         <p className="text-xl text-gray-600 dark:text-gray-300 mb-8">
           Rejoins une communauté de développeurs passionnés
         </p>
-       <button
-  onClick={() => signIn('github')}
-  className="flex items-center gap-2 mx-auto px-6 py-3 bg-gray-900 text-white rounded-lg hover:bg-gray-800"
->
-  <FaGithub className="w-5 h-5" />
-  Se connecter avec GitHub
-</button>
+        <button
+          onClick={() => signIn('github')}
+          className="flex items-center gap-2 mx-auto px-6 py-3 bg-gray-900 text-white rounded-lg hover:bg-gray-800"
+        >
+          <FaGithub className="w-5 h-5" />
+          Se connecter avec GitHub
+        </button>
       </div>
     );
   }
@@ -84,7 +86,7 @@ export default function Home() {
       <div className="bg-gradient-to-r from-blue-500/10 to-purple-600/10 rounded-2xl p-6 border border-blue-200 dark:border-blue-800">
         <div className="flex items-center gap-3">
           <div className="bg-green-500 p-2 rounded-full">
-            <User className="w-4 h-4 text-white" />
+            <span className="text-white text-sm">✓</span>
           </div>
           <div>
             <p className="text-sm text-gray-500">Connecté en tant que</p>
@@ -131,7 +133,7 @@ export default function Home() {
         </form>
       </div>
 
-      {/* Liste des posts */}
+      {/* Liste des posts avec PostCard (avec commentaires) */}
       <div className="space-y-4">
         {loading ? (
           <div className="flex justify-center py-12">
@@ -145,33 +147,12 @@ export default function Home() {
           </div>
         ) : (
           posts.map((post) => (
-            <div key={post._id} className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 hover:shadow-md transition-shadow">
-              <h3 className="text-xl font-bold mb-2">{post.title}</h3>
-              <p className="text-gray-600 dark:text-gray-300 mb-4">{post.content}</p>
-              <div className="flex items-center justify-between text-sm text-gray-500">
-                <div className="flex items-center gap-4">
-                  <div className="flex items-center gap-1">
-                    <User className="w-4 h-4" />
-                    <span>{post.authorName}</span>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <Calendar className="w-4 h-4" />
-                    <span>{new Date(post.createdAt).toLocaleDateString('fr-FR')}</span>
-                  </div>
-                </div>
-                <button
-                  onClick={() => handleLike(post._id)}
-                  className={`flex items-center gap-1 px-3 py-1 rounded-full transition-colors ${
-                    post.likedBy.includes(session?.user?.email || '')
-                      ? 'bg-red-500 text-white'
-                      : 'bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600'
-                  }`}
-                >
-                  <Heart className={`w-4 h-4 ${post.likedBy.includes(session?.user?.email || '') ? 'fill-current' : ''}`} />
-                  <span>{post.likes}</span>
-                </button>
-              </div>
-            </div>
+            <PostCard
+              key={post._id}
+              post={post}
+              userId={session.user?.email || ''}
+              onLike={handleLike}
+            />
           ))
         )}
       </div>
