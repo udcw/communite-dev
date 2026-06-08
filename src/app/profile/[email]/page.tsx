@@ -3,8 +3,7 @@
 import { useSession } from 'next-auth/react';
 import { useParams, useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
-import { FaUser, FaEnvelope, FaCalendar, FaHeart, FaComment, FaFileAlt, FaArrowLeft, FaGithub, FaChartLine, FaAward } from 'react-icons/fa';
-import { HiCode, HiLocationMarker, HiLink } from 'react-icons/hi';
+import { FaUser, FaEnvelope, FaCalendar, FaHeart, FaComment, FaFileAlt, FaArrowLeft } from 'react-icons/fa';
 import PostCard from '@/components/PostCard';
 
 interface Post {
@@ -52,22 +51,18 @@ export default function ProfilePage() {
     const fetchUserData = async () => {
       setLoading(true);
       
-      // Récupérer les posts
       const postsRes = await fetch(`/api/users/${encodeURIComponent(decodedEmail)}/posts`);
       const postsData = await postsRes.json();
       setPosts(postsData);
       
-      // Récupérer les stats
       const statsRes = await fetch(`/api/users/${encodeURIComponent(decodedEmail)}/stats`);
       const statsData = await statsRes.json();
       setStats(statsData);
       
-      // Récupérer les commentaires
       const commentsRes = await fetch(`/api/users/${encodeURIComponent(decodedEmail)}/comments`);
       const commentsData = await commentsRes.json();
       setComments(commentsData);
       
-      // Infos utilisateur
       if (postsData.length > 0) {
         setUserInfo({ name: postsData[0].authorName });
       }
@@ -95,7 +90,6 @@ export default function ProfilePage() {
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
-      {/* Bouton retour */}
       <button
         onClick={() => router.back()}
         className="flex items-center gap-2 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 transition-colors text-sm"
@@ -104,12 +98,9 @@ export default function ProfilePage() {
         Retour
       </button>
 
-      {/* En-tête du profil */}
       <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
-        {/* Bannière */}
         <div className="bg-gradient-to-r from-blue-500 to-purple-600 h-24"></div>
         
-        {/* Avatar et infos */}
         <div className="px-6 pb-6">
           <div className="flex flex-col items-center -mt-12">
             <div className="w-24 h-24 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full border-4 border-white dark:border-gray-800 flex items-center justify-center shadow-lg">
@@ -127,7 +118,6 @@ export default function ProfilePage() {
             )}
           </div>
 
-          {/* Statistiques */}
           <div className="grid grid-cols-3 gap-3 mt-6">
             <div className="text-center p-3 bg-gray-50 dark:bg-gray-700/50 rounded-xl">
               <FaFileAlt className="w-5 h-5 text-blue-500 mx-auto mb-1" />
@@ -146,7 +136,6 @@ export default function ProfilePage() {
             </div>
           </div>
 
-          {/* Date d'inscription */}
           <div className="flex items-center justify-center gap-1 mt-4 text-xs text-gray-400">
             <FaCalendar className="w-3 h-3" />
             <span>Membre depuis {new Date(stats?.memberSince || new Date()).toLocaleDateString('fr-FR')}</span>
@@ -154,7 +143,6 @@ export default function ProfilePage() {
         </div>
       </div>
 
-      {/* Tabs */}
       <div className="flex gap-2 border-b border-gray-200 dark:border-gray-700">
         <button
           onClick={() => setActiveTab('posts')}
@@ -178,7 +166,6 @@ export default function ProfilePage() {
         </button>
       </div>
 
-      {/* Liste des posts */}
       {activeTab === 'posts' && (
         <div className="space-y-4">
           {posts.length === 0 ? (
@@ -199,13 +186,12 @@ export default function ProfilePage() {
         </div>
       )}
 
-      {/* Liste des commentaires */}
       {activeTab === 'comments' && (
         <div className="space-y-3">
           {comments.length === 0 ? (
             <div className="text-center py-12 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700">
               <FaComment className="w-12 h-12 text-gray-400 mx-auto mb-3" />
-              <p className text-gray-500">Aucun commentaire</p>
+              <p className="text-gray-500">Aucun commentaire</p>  {/* ← Ligne corrigée */}
             </div>
           ) : (
             comments.map((comment) => (
