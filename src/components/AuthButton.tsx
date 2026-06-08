@@ -1,12 +1,13 @@
 'use client';
 
 import { useSession, signIn, signOut } from 'next-auth/react';
-import { FaGithub } from 'react-icons/fa';
-import { HiLogout, HiUser } from 'react-icons/hi';
 import { useState } from 'react';
+import { FaGithub, FaSignOutAlt, FaUser, FaChevronDown } from 'react-icons/fa';
+import { useRouter } from 'next/navigation';
 
 export default function AuthButton() {
   const { data: session } = useSession();
+  const router = useRouter();
   const [showMenu, setShowMenu] = useState(false);
 
   if (session) {
@@ -14,22 +15,32 @@ export default function AuthButton() {
       <div className="relative">
         <button
           onClick={() => setShowMenu(!showMenu)}
-          className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-gray-100"
+          className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
         >
-          <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center">
-            <HiUser className="w-4 h-4 text-white" />
+          <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
+            <FaUser className="w-4 h-4 text-white" />
           </div>
           <span className="text-sm font-medium">{session.user?.name}</span>
-          <span className="text-xs">▼</span>
+          <FaChevronDown className="w-3 h-3" />
         </button>
         
         {showMenu && (
-          <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border py-1 z-10">
+          <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 py-1 z-10">
+            <button
+              onClick={() => {
+                setShowMenu(false);
+                router.push(`/profile/${encodeURIComponent(session.user?.email || '')}`);
+              }}
+              className="flex items-center gap-2 w-full px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+            >
+              <FaUser className="w-4 h-4" />
+              Mon profil
+            </button>
             <button
               onClick={() => signOut()}
-              className="flex items-center gap-2 w-full px-4 py-2 text-sm text-red-600 hover:bg-gray-100"
+              className="flex items-center gap-2 w-full px-4 py-2 text-sm text-red-600 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
             >
-              <HiLogout className="w-4 h-4" />
+              <FaSignOutAlt className="w-4 h-4" />
               Se déconnecter
             </button>
           </div>
@@ -41,10 +52,10 @@ export default function AuthButton() {
   return (
     <button
       onClick={() => signIn('github')}
-      className="flex items-center gap-2 px-4 py-2 bg-gray-900 text-white rounded-lg hover:bg-gray-800"
+      className="flex items-center gap-2 px-4 py-2 bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition-all transform hover:scale-105"
     >
-      <FaGithub className="w-5 h-5" />
-      Se connecter avec GitHub
+      <FaGithub className="w-4 h-4" />
+      Se connecter
     </button>
   );
 }

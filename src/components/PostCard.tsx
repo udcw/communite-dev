@@ -2,6 +2,7 @@
 
 import { FaHeart, FaRegHeart, FaUser, FaCalendar, FaComment } from 'react-icons/fa';
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import CommentSection from './CommentSection';
 
 interface PostCardProps {
@@ -10,6 +11,7 @@ interface PostCardProps {
     title: string;
     content: string;
     authorName: string;
+    authorEmail: string;
     likes: number;
     likedBy: string[];
     createdAt: string;
@@ -22,7 +24,12 @@ interface PostCardProps {
 export default function PostCard({ post, userId, onLike }: PostCardProps) {
   const [isHovered, setIsHovered] = useState(false);
   const [showComments, setShowComments] = useState(false);
+  const router = useRouter();
   const isLiked = post.likedBy.includes(userId);
+
+  const goToProfile = () => {
+    router.push(`/profile/${encodeURIComponent(post.authorEmail)}`);
+  };
 
   return (
     <div
@@ -52,10 +59,13 @@ export default function PostCard({ post, userId, onLike }: PostCardProps) {
 
         <div className="flex flex-wrap justify-between items-center gap-3 text-sm text-gray-500 dark:text-gray-400">
           <div className="flex items-center gap-4">
-            <div className="flex items-center gap-1.5">
+            <button
+              onClick={goToProfile}
+              className="flex items-center gap-1.5 hover:text-blue-500 transition-colors"
+            >
               <FaUser className="w-3.5 h-3.5" />
               <span className="font-medium">{post.authorName}</span>
-            </div>
+            </button>
             <div className="flex items-center gap-1.5">
               <FaCalendar className="w-3.5 h-3.5" />
               <span>{new Date(post.createdAt).toLocaleDateString('fr-FR')}</span>

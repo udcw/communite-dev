@@ -2,7 +2,7 @@
 
 import { useSession, signIn } from 'next-auth/react';
 import { useState, useEffect } from 'react';
-import { Sparkles, MessageCircle, Send, Loader2, Image as ImageIcon, Users, Heart, MessageSquare, Share2, Zap, Shield, Globe } from 'lucide-react';
+import { Sparkles, MessageCircle, Send, Loader2, Image as ImageIcon, Heart, MessageSquare, Zap, Shield } from 'lucide-react';
 import { FaGithub } from 'react-icons/fa';
 import PostCard from '@/components/PostCard';
 import ImageUpload from '@/components/ImageUpload';
@@ -12,6 +12,7 @@ interface Post {
   title: string;
   content: string;
   authorName: string;
+  authorEmail: string;  // ← AJOUTÉ
   likes: number;
   likedBy: string[];
   createdAt: string;
@@ -61,11 +62,11 @@ export default function Home() {
     fetchPosts();
   }, []);
 
-  // LANDING PAGE POUR VISITEURS NON CONNECTÉS - PLEINE LARGEUR
+  // LANDING PAGE POUR VISITEURS NON CONNECTÉS
   if (!session) {
     return (
       <div className="min-h-screen px-0">
-        {/* Hero Section - plus large */}
+        {/* Hero Section */}
         <div className="relative overflow-hidden bg-gradient-to-br from-blue-600 via-purple-600 to-pink-500 mb-12 shadow-2xl -mx-4 md:-mx-6 rounded-none md:rounded-3xl">
           <div className="absolute inset-0 bg-black/20"></div>
           <div className="absolute top-0 left-0 w-full h-full overflow-hidden">
@@ -106,7 +107,7 @@ export default function Home() {
           </div>
         </div>
 
-        {/* Features Section - full width */}
+        {/* Features Section */}
         <div className="grid md:grid-cols-3 gap-4 md:gap-6 mb-12 px-0">
           <div className="bg-white dark:bg-gray-800 rounded-xl p-4 md:p-6 text-center hover:shadow-xl transition-all transform hover:-translate-y-1">
             <div className="w-12 h-12 md:w-14 md:h-14 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center mx-auto mb-3 md:mb-4 shadow-lg">
@@ -133,40 +134,21 @@ export default function Home() {
           </div>
         </div>
 
-        {/* Stats Section - full width */}
+        {/* Stats Section */}
         <div className="bg-gradient-to-r from-gray-100 to-gray-200 dark:from-gray-800 dark:to-gray-900 rounded-xl p-6 md:p-8 mb-12">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6 text-center">
-            <div>
-              <div className="text-2xl md:text-3xl font-bold text-blue-600">500+</div>
-              <div className="text-xs md:text-sm text-gray-500">Membres actifs</div>
-            </div>
-            <div>
-              <div className="text-2xl md:text-3xl font-bold text-purple-600">50+</div>
-              <div className="text-xs md:text-sm text-gray-500">Posts partagés</div>
-            </div>
-            <div>
-              <div className="text-2xl md:text-3xl font-bold text-pink-600">1k+</div>
-              <div className="text-xs md:text-sm text-gray-500">Likes donnés</div>
-            </div>
-            <div>
-              <div className="text-2xl md:text-3xl font-bold text-green-600">24/7</div>
-              <div className="text-xs md:text-sm text-gray-500">Communauté active</div>
-            </div>
+            <div><div className="text-2xl md:text-3xl font-bold text-blue-600">500+</div><div className="text-xs md:text-sm text-gray-500">Membres actifs</div></div>
+            <div><div className="text-2xl md:text-3xl font-bold text-purple-600">50+</div><div className="text-xs md:text-sm text-gray-500">Posts partagés</div></div>
+            <div><div className="text-2xl md:text-3xl font-bold text-pink-600">1k+</div><div className="text-xs md:text-sm text-gray-500">Likes donnés</div></div>
+            <div><div className="text-2xl md:text-3xl font-bold text-green-600">24/7</div><div className="text-xs md:text-sm text-gray-500">Communauté active</div></div>
           </div>
         </div>
 
         {/* Final CTA */}
         <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl p-6 md:p-8 text-center">
-          <h2 className="text-xl md:text-2xl font-bold text-white mb-3">
-            Prêt à rejoindre l'aventure ?
-          </h2>
-          <p className="text-white/80 text-sm md:text-base mb-6 max-w-md mx-auto">
-            Rejoins des centaines de développeurs
-          </p>
-          <button
-            onClick={() => signIn('github')}
-            className="inline-flex items-center gap-2 px-5 py-2 md:px-6 md:py-3 bg-white text-gray-900 rounded-xl font-semibold text-sm md:text-base hover:shadow-lg transition transform hover:scale-105"
-          >
+          <h2 className="text-xl md:text-2xl font-bold text-white mb-3">Prêt à rejoindre l'aventure ?</h2>
+          <p className="text-white/80 text-sm md:text-base mb-6 max-w-md mx-auto">Rejoins des centaines de développeurs</p>
+          <button onClick={() => signIn('github')} className="inline-flex items-center gap-2 px-5 py-2 md:px-6 md:py-3 bg-white text-gray-900 rounded-xl font-semibold text-sm md:text-base hover:shadow-lg transition transform hover:scale-105">
             <FaGithub className="w-4 h-4 md:w-5 md:h-5" />
             S'inscrire avec GitHub
           </button>
@@ -175,7 +157,7 @@ export default function Home() {
     );
   }
 
-  // PAGE POUR UTILISATEURS CONNECTÉS - PLEINE LARGEUR
+  // PAGE POUR UTILISATEURS CONNECTÉS
   return (
     <div className="px-0">
       <div className="space-y-6">
@@ -201,35 +183,13 @@ export default function Home() {
             </h2>
           </div>
           <form onSubmit={createPost} className="p-4 space-y-3">
-            <input
-              type="text"
-              placeholder="Titre"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-900 text-sm"
-              required
-            />
-            <textarea
-              placeholder="Partagez votre idée..."
-              value={content}
-              onChange={(e) => setContent(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-900 text-sm"
-              rows={3}
-              required
-            />
+            <input type="text" placeholder="Titre" value={title} onChange={(e) => setTitle(e.target.value)} className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-900 text-sm" required />
+            <textarea placeholder="Partagez votre idée..." value={content} onChange={(e) => setContent(e.target.value)} className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-900 text-sm" rows={3} required />
             
-            <ImageUpload 
-              onImageUpload={setImageUrl}
-              onRemove={() => setImageUrl('')}
-              currentImage={imageUrl}
-            />
+            <ImageUpload onImageUpload={setImageUrl} onRemove={() => setImageUrl('')} currentImage={imageUrl} />
 
             <div className="flex justify-end">
-              <button
-                type="submit"
-                disabled={submitting}
-                className="flex items-center gap-2 px-4 py-1.5 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-lg text-sm font-medium hover:opacity-90 transition-all disabled:opacity-50"
-              >
+              <button type="submit" disabled={submitting} className="flex items-center gap-2 px-4 py-1.5 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-lg text-sm font-medium hover:opacity-90 transition-all disabled:opacity-50">
                 {submitting ? <Loader2 className="w-3 h-3 animate-spin" /> : <Send className="w-3 h-3" />}
                 {submitting ? 'Publication...' : 'Publier'}
               </button>
@@ -240,9 +200,7 @@ export default function Home() {
         {/* Liste des posts */}
         <div className="space-y-4">
           {loading ? (
-            <div className="flex justify-center py-8">
-              <Loader2 className="w-6 h-6 animate-spin text-blue-500" />
-            </div>
+            <div className="flex justify-center py-8"><Loader2 className="w-6 h-6 animate-spin text-blue-500" /></div>
           ) : posts.length === 0 ? (
             <div className="text-center py-8 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700">
               <MessageCircle className="w-10 h-10 text-gray-400 mx-auto mb-2" />
