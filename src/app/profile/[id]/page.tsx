@@ -3,7 +3,7 @@
 import { useSession } from 'next-auth/react';
 import { useParams, useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
-import { FaUser, FaEnvelope, FaCalendar, FaHeart, FaComment, FaFileAlt, FaArrowLeft } from 'react-icons/fa';
+import { FaUser, FaEnvelope, FaArrowLeft, FaFileAlt } from 'react-icons/fa';
 import PostCard from '@/components/PostCard';
 
 interface Post {
@@ -24,39 +24,53 @@ export default function ProfilePage() {
   const router = useRouter();
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
-  const [userInfo, setUserInfo] = useState<{ name: string; email: string } | null>(null);
+  const [userName, setUserName] = useState('');
+  const [userEmail, setUserEmail] = useState('');
+
+  // L'email est passé directement dans l'URL
+  const email = typeof id === 'string' ? decodeURIComponent(id) : '';
 
   useEffect(() => {
     const fetchUserData = async () => {
+      if (!email) {
+        setLoading(false);
+        return;
+      }
+      
       try {
-        // id est déjà l'email ou l'identifiant
-        const email = typeof id === 'string' ? id : '';
+        console.log('Fetching posts for email:', email);
+        const res = await fetch(`/api/users/${encodeURIComponent(email)}/posts`);
+        const data = await res.json();
         
-        const postsRes = await fetch(`/api/users/${encodeURIComponent(email)}/posts`);
-        const postsData = await postsRes.json();
-        setPosts(postsData);
-        
-        if (postsData.length > 0) {
-          setUserInfo({
-            name: postsData[0].authorName,
-            email: postsData[0].authorEmail
-          });
+        if (Array.isArray(data)) {
+          setPosts(data);
+          if (data.length > 0) {
+            setUserName(data[0].authorName);
+            setUserEmail(data[0].authorEmail);
+          } else {
+            setUserName(email.split('@')[0]);
+            setUserEmail(email);
+          }
         }
       } catch (error) {
-        console.error('Erreur:', error);
+        console.error('Erreur chargement profil:', error);
       }
       setLoading(false);
     };
     
-    if (id) fetchUserData();
-  }, [id]);
+    fetchUserData();
+  }, [email]);
 
   const handleLike = async (postId: string) => {
-    await fetch(`/api/posts/${postId}/like`, { method: 'POST' });
-    if (userInfo?.email) {
-      const postsRes = await fetch(`/api/users/${encodeURIComponent(userInfo.email)}/posts`);
-      const postsData = await postsRes.json();
-      setPosts(postsData);
+    try {
+      await fetch(`/api/posts/${postId}/like`, { method: 'POST' });
+      const res = await fetch(`/api/users/${encodeURIComponent(email)}/posts`);
+      const data = await res.json();
+      if (Array.isArray(data)) {
+        setPosts(data);
+      }
+    } catch (error) {
+      console.error('Erreur like:', error);
     }
   };
 
@@ -68,31 +82,30 @@ export default function ProfilePage() {
     );
   }
 
-  if (!userInfo) {
-    return (
-      <div className="text-center py-20">
-        <p className="text-gray-500">Utilisateur non trouvé</p>
-        <button onClick={() => router.back()} className="mt-4 text-blue-500">Retour</button>
-      </div>
-    );
-  }
-
   return (
     <div className="max-w-4xl mx-auto space-y-6">
-      <button onClick={() => router.back()} className="flex items-center gap-2 text-gray-500 text-sm">
-        <FaArrowLeft className="w-4 h-4" /> Retour
+      <button 
+        onClick={() => router.back()} 
+        className="flex items-center gap-2 text-gray-500 text-sm hover:text-gray-700"
+      >
+        <FaArrowLeft /> Retour
       </button>
 
-      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 p-6">
+      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border p-6">
         <div className="flex flex-col items-center">
           <div className="w-24 h-24 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
             <FaUser className="w-10 h-10 text-white" />
           </div>
-          <h1 className="text-2xl font-bold mt-3">{userInfo.name}</h1>
+          <h1 className="text-2xl font-bold mt-3">{userName || 'Utilisateur'}</h1>
           <div className="flex items-center gap-2 mt-1">
             <FaEnvelope className="w-3 h-3 text-gray-400" />
-            <p className="text-sm text-gray-500">{userInfo.email}</p>
+            <p className="text-sm text-gray-500">{userEmail || email}</p>
           </div>
+          {session?.user?.email === email && (
+            <span className="mt-2 px-3 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 text-xs rounded-full">
+              C'est vous
+            </span>
+          )}
         </div>
 
         <div className="grid grid-cols-3 gap-3 mt-6">
@@ -105,9 +118,10 @@ export default function ProfilePage() {
       </div>
 
       <div className="space-y-4">
+        <h2 className="text-lg font-semibold">Posts</h2>
         {posts.length === 0 ? (
-          <div className="text-center py-12 bg-white dark:bg-gray-800 rounded-xl border">
-            <p className="text-gray-500">Aucun post pour le moment</p>
+          <div className="text-center py-8 bg-white dark:bg-gray-800 rounded-xl border">
+            <p className="text-gray-500">Aucun post</p>
           </div>
         ) : (
           posts.map((post) => (

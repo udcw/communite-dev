@@ -12,7 +12,7 @@ interface Post {
   title: string;
   content: string;
   authorName: string;
-  authorEmail: string;  // ← AJOUTÉ
+  authorEmail: string;
   likes: number;
   likedBy: string[];
   createdAt: string;
@@ -25,14 +25,25 @@ export default function Home() {
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
   const [imageUrl, setImageUrl] = useState('');
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
 
   const fetchPosts = async () => {
     setLoading(true);
-    const res = await fetch('/api/posts');
-    const data = await res.json();
-    setPosts(data);
+    try {
+      const res = await fetch('/api/posts');
+      const data = await res.json();
+      // Vérifie que data est un tableau
+      if (Array.isArray(data)) {
+        setPosts(data);
+      } else {
+        console.error('L\'API n\'a pas retourné un tableau:', data);
+        setPosts([]);
+      }
+    } catch (error) {
+      console.error('Erreur fetchPosts:', error);
+      setPosts([]);
+    }
     setLoading(false);
   };
 
@@ -41,21 +52,29 @@ export default function Home() {
     if (!title.trim() || !content.trim()) return;
     
     setSubmitting(true);
-    await fetch('/api/posts', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ title, content, imageUrl }),
-    });
-    setTitle('');
-    setContent('');
-    setImageUrl('');
+    try {
+      await fetch('/api/posts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title, content, imageUrl }),
+      });
+      setTitle('');
+      setContent('');
+      setImageUrl('');
+      await fetchPosts();
+    } catch (error) {
+      console.error('Erreur création post:', error);
+    }
     setSubmitting(false);
-    fetchPosts();
   };
 
   const handleLike = async (postId: string) => {
-    await fetch(`/api/posts/${postId}/like`, { method: 'POST' });
-    fetchPosts();
+    try {
+      await fetch(`/api/posts/${postId}/like`, { method: 'POST' });
+      await fetchPosts();
+    } catch (error) {
+      console.error('Erreur like:', error);
+    }
   };
 
   useEffect(() => {
@@ -183,13 +202,31 @@ export default function Home() {
             </h2>
           </div>
           <form onSubmit={createPost} className="p-4 space-y-3">
-            <input type="text" placeholder="Titre" value={title} onChange={(e) => setTitle(e.target.value)} className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-900 text-sm" required />
-            <textarea placeholder="Partagez votre idée..." value={content} onChange={(e) => setContent(e.target.value)} className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-900 text-sm" rows={3} required />
+            <input 
+              type="text" 
+              placeholder="Titre" 
+              value={title} 
+              onChange={(e) => setTitle(e.target.value)} 
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-900 text-sm" 
+              required 
+            />
+            <textarea 
+              placeholder="Partagez votre idée..." 
+              value={content} 
+              onChange={(e) => setContent(e.target.value)} 
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-900 text-sm" 
+              rows={3} 
+              required 
+            />
             
             <ImageUpload onImageUpload={setImageUrl} onRemove={() => setImageUrl('')} currentImage={imageUrl} />
 
             <div className="flex justify-end">
-              <button type="submit" disabled={submitting} className="flex items-center gap-2 px-4 py-1.5 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-lg text-sm font-medium hover:opacity-90 transition-all disabled:opacity-50">
+              <button 
+                type="submit" 
+                disabled={submitting} 
+                className="flex items-center gap-2 px-4 py-1.5 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-lg text-sm font-medium hover:opacity-90 transition-all disabled:opacity-50"
+              >
                 {submitting ? <Loader2 className="w-3 h-3 animate-spin" /> : <Send className="w-3 h-3" />}
                 {submitting ? 'Publication...' : 'Publier'}
               </button>
@@ -200,11 +237,14 @@ export default function Home() {
         {/* Liste des posts */}
         <div className="space-y-4">
           {loading ? (
-            <div className="flex justify-center py-8"><Loader2 className="w-6 h-6 animate-spin text-blue-500" /></div>
-          ) : posts.length === 0 ? (
+            <div className="flex justify-center py-8">
+              <Loader2 className="w-6 h-6 animate-spin text-blue-500" />
+            </div>
+          ) : !posts || posts.length === 0 ? (
             <div className="text-center py-8 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700">
               <MessageCircle className="w-10 h-10 text-gray-400 mx-auto mb-2" />
-              <p className="text-gray-500 text-sm">Aucun post</p>
+              <p className="text-gray-500 text-sm">Aucun post pour le moment</p>
+              <p className="text-gray-400 text-xs">Soyez le premier à publier !</p>
             </div>
           ) : (
             posts.map((post) => (
