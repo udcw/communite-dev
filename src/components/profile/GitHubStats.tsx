@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { FaGithub, FaStar, FaCodeBranch, FaRepository } from 'react-icons/fa';
+import { FaGithub, FaStar, FaCodeBranch, FaFolder } from 'react-icons/fa';
 
 interface GitHubStatsProps {
   username: string;
@@ -18,7 +18,8 @@ export default function GitHubStats({ username }: GitHubStatsProps) {
         .then(data => {
           setStats(data.stats);
           setLoading(false);
-        });
+        })
+        .catch(() => setLoading(false));
     }
   }, [username]);
 
