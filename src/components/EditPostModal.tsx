@@ -26,15 +26,19 @@ export default function EditPostModal({ post, onClose, onUpdate }: EditPostModal
     e.preventDefault();
     setLoading(true);
     
-    const res = await fetch(`/api/posts/${post._id}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ title, content, imageUrl }),
-    });
-    
-    if (res.ok) {
-      onUpdate();
-      onClose();
+    try {
+      const res = await fetch(`/api/posts/${post._id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title, content, imageUrl }),
+      });
+      
+      if (res.ok) {
+        onUpdate();
+        onClose();
+      }
+    } catch (error) {
+      console.error('Erreur lors de la mise à jour:', error);
     }
     setLoading(false);
   };
@@ -43,11 +47,15 @@ export default function EditPostModal({ post, onClose, onUpdate }: EditPostModal
     if (!confirm('Supprimer ce post définitivement ?')) return;
     
     setDeleting(true);
-    const res = await fetch(`/api/posts/${post._id}`, { method: 'DELETE' });
-    
-    if (res.ok) {
-      onUpdate();
-      onClose();
+    try {
+      const res = await fetch(`/api/posts/${post._id}`, { method: 'DELETE' });
+      
+      if (res.ok) {
+        onUpdate();
+        onClose();
+      }
+    } catch (error) {
+      console.error('Erreur lors de la suppression:', error);
     }
     setDeleting(false);
   };
@@ -71,11 +79,13 @@ export default function EditPostModal({ post, onClose, onUpdate }: EditPostModal
             className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-900"
             required
           />
+          
           <textarea
             placeholder="Contenu"
             value={content}
             onChange={(e) => setContent(e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-900 min-h-[150px]"
+            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-900"
+            rows={6}
             required
           />
           
@@ -96,14 +106,23 @@ export default function EditPostModal({ post, onClose, onUpdate }: EditPostModal
               {deleting ? 'Suppression...' : 'Supprimer'}
             </button>
             
-            <button
-              type="submit"
-              disabled={loading}
-              className="flex items-center gap-2 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition disabled:opacity-50"
-            >
-              <FaSave className="w-4 h-4" />
-              {loading ? 'Enregistrement...' : 'Enregistrer'}
-            </button>
+            <div className="flex gap-3">
+              <button
+                type="button"
+                onClick={onClose}
+                className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition"
+              >
+                Annuler
+              </button>
+              <button
+                type="submit"
+                disabled={loading}
+                className="flex items-center gap-2 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition disabled:opacity-50"
+              >
+                <FaSave className="w-4 h-4" />
+                {loading ? 'Enregistrement...' : 'Enregistrer'}
+              </button>
+            </div>
           </div>
         </form>
       </div>
