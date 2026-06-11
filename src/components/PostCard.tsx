@@ -34,10 +34,9 @@ export default function PostCard({ post, userId, onLike, onDelete, onUpdate }: P
   const isLiked = post.likedBy.includes(userId);
   const isAuthor = userId === post.authorEmail;
 
-  const goToProfile = () => {
-    router.push(`/profile/${encodeURIComponent(post.authorEmail)}`);
-  };
-
+const goToProfile = () => {
+  router.push(`/profile/${post.authorEmail}`);
+};
   const handleDelete = async () => {
     if (confirm('Supprimer ce post ?')) {
       const res = await fetch(`/api/posts/${post._id}`, { method: 'DELETE' });
