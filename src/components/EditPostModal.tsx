@@ -40,12 +40,15 @@ export default function EditPostModal({ post, onClose, onUpdate }: EditPostModal
   };
 
   const handleDelete = async () => {
-    if (!confirm('Supprimer ce post ?')) return;
+    if (!confirm('Supprimer ce post définitivement ?')) return;
     
     setDeleting(true);
-    await fetch(`/api/posts/${post._id}`, { method: 'DELETE' });
-    onUpdate();
-    onClose();
+    const res = await fetch(`/api/posts/${post._id}`, { method: 'DELETE' });
+    
+    if (res.ok) {
+      onUpdate();
+      onClose();
+    }
     setDeleting(false);
   };
 
@@ -65,14 +68,14 @@ export default function EditPostModal({ post, onClose, onUpdate }: EditPostModal
             placeholder="Titre"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500"
+            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-900"
             required
           />
           <textarea
             placeholder="Contenu"
             value={content}
             onChange={(e) => setContent(e.target.value)}
-            className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 min-h-[150px]"
+            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-900 min-h-[150px]"
             required
           />
           
@@ -82,12 +85,12 @@ export default function EditPostModal({ post, onClose, onUpdate }: EditPostModal
             currentImage={imageUrl}
           />
           
-          <div className="flex justify-between gap-3 pt-4">
+          <div className="flex justify-between gap-3 pt-4 border-t border-gray-200 dark:border-gray-700">
             <button
               type="button"
               onClick={handleDelete}
               disabled={deleting}
-              className="flex items-center gap-2 px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition"
+              className="flex items-center gap-2 px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition disabled:opacity-50"
             >
               <FaTrash className="w-4 h-4" />
               {deleting ? 'Suppression...' : 'Supprimer'}
@@ -96,7 +99,7 @@ export default function EditPostModal({ post, onClose, onUpdate }: EditPostModal
             <button
               type="submit"
               disabled={loading}
-              className="flex items-center gap-2 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition"
+              className="flex items-center gap-2 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition disabled:opacity-50"
             >
               <FaSave className="w-4 h-4" />
               {loading ? 'Enregistrement...' : 'Enregistrer'}
