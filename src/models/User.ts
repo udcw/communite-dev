@@ -6,6 +6,10 @@ export interface IUser {
   githubId?: string;
   role: 'user' | 'admin';
   createdAt: Date;
+  // Portfolio fields
+  title?: string;
+  company?: string;
+  location?: string;
   bio?: string;
   skills: string[];
   technologies: string[];
@@ -22,17 +26,21 @@ const UserSchema = new Schema<IUser>({
   githubId: { type: String, unique: true, sparse: true },
   role: { type: String, enum: ['user', 'admin'], default: 'user' },
   createdAt: { type: Date, default: Date.now },
-  bio: { type: String, maxlength: 500 },
-  skills: [{ type: String }],
-  technologies: [{ type: String }],
-  githubUsername: { type: String },
-  linkedinUrl: { type: String },
-  portfolioUrl: { type: String },
-  cvUrl: { type: String },
+  // Portfolio fields
+  title: { type: String, default: '' },
+  company: { type: String, default: '' },
+  location: { type: String, default: '' },
+  bio: { type: String, maxlength: 500, default: '' },
+  skills: [{ type: String, default: [] }],
+  technologies: [{ type: String, default: [] }],
+  githubUsername: { type: String, default: '' },
+  linkedinUrl: { type: String, default: '' },
+  portfolioUrl: { type: String, default: '' },
+  cvUrl: { type: String, default: '' },
   certifications: [{
-    name: String,
-    date: Date,
-    issuer: String
+    name: { type: String, default: '' },
+    date: { type: Date, default: Date.now },
+    issuer: { type: String, default: '' }
   }]
 });
 

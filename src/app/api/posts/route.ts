@@ -7,10 +7,12 @@ export async function GET() {
   try {
     await connectDB();
     const posts = await Post.find().sort({ createdAt: -1 }).limit(50);
-    return NextResponse.json(posts);
+    // Retourne toujours un tableau, même vide
+    return NextResponse.json(posts || []);
   } catch (error) {
     console.error('Erreur GET posts:', error);
-    return NextResponse.json({ error: 'Erreur serveur' }, { status: 500 });
+    // En cas d'erreur, retourner un tableau vide
+    return NextResponse.json([], { status: 500 });
   }
 }
 
@@ -35,22 +37,16 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Contenu invalide (10-5000 caractères)' }, { status: 400 });
     }
 
-    // Nettoyage basique (anti-XSS)
-    const cleanTitle = title.replace(/[<>]/g, '');
-    const cleanContent = content.replace(/[<>]/g, '');
-    const cleanImageUrl = imageUrl?.replace(/[<>]/g, '') || '';
-
     const post = await Post.create({
-      title: cleanTitle,
-      content: cleanContent,
-      imageUrl: cleanImageUrl,
+      title: title.replace(/[<>]/g, ''),
+      content: content.replace(/[<>]/g, ''),
+      imageUrl: imageUrl?.replace(/[<>]/g, '') || '',
       authorId: session.user.email,
       authorName: session.user.name,
       authorEmail: session.user.email,
     });
 
     return NextResponse.json(post, { status: 201 });
-    
   } catch (error) {
     console.error('Erreur POST post:', error);
     return NextResponse.json({ error: 'Erreur serveur' }, { status: 500 });

@@ -29,23 +29,24 @@ export default function Home() {
   const [submitting, setSubmitting] = useState(false);
 
   const fetchPosts = async () => {
-    setLoading(true);
-    try {
-      const res = await fetch('/api/posts');
-      const data = await res.json();
-      // Vérifie que data est un tableau
-      if (Array.isArray(data)) {
-        setPosts(data);
-      } else {
-        console.error('L\'API n\'a pas retourné un tableau:', data);
-        setPosts([]);
-      }
-    } catch (error) {
-      console.error('Erreur fetchPosts:', error);
+  setLoading(true);
+  try {
+    const res = await fetch('/api/posts');
+    const data = await res.json();
+    console.log('API retourne:', data);
+    // Vérifie que data est un tableau
+    if (Array.isArray(data)) {
+      setPosts(data);
+    } else {
+      console.error('L\'API n\'a pas retourné un tableau:', data);
       setPosts([]);
     }
-    setLoading(false);
-  };
+  } catch (error) {
+    console.error('Erreur fetchPosts:', error);
+    setPosts([]);
+  }
+  setLoading(false);
+};
 
   const createPost = async (e: React.FormEvent) => {
     e.preventDefault();
