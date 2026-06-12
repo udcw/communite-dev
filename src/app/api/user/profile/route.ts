@@ -7,17 +7,39 @@ export async function GET(req: NextRequest) {
   try {
     const session = await getServerSession();
     
+    // Permettre l'accès même sans session pour les profils publics
+    const url = new URL(req.url);
+    const emailParam = url.searchParams.get('email');
+    
+    if (emailParam) {
+      // Consultation publique (pas besoin d'être connecté)
+      await connectDB();
+      const user = await User.findOne({ email: emailParam });
+      if (!user) {
+        return NextResponse.json({ error: 'Utilisateur non trouvé' }, { status: 404 });
+      }
+      return NextResponse.json({
+        name: user.name,
+        email: user.email,
+        bio: user.bio || '',
+        skills: user.skills || [],
+        technologies: user.technologies || [],
+        githubUsername: user.githubUsername || '',
+        linkedinUrl: user.linkedinUrl || '',
+        portfolioUrl: user.portfolioUrl || '',
+        title: user.title || '',
+        company: user.company || '',
+        location: user.location || '',
+      });
+    }
+    
+    // Pour son propre profil, nécessite authentification
     if (!session?.user) {
       return NextResponse.json({ error: 'Non authentifié' }, { status: 401 });
     }
     
-    // Récupérer l'email depuis les paramètres de l'URL
-    const url = new URL(req.url);
-    const emailParam = url.searchParams.get('email');
-    const searchEmail = emailParam || session.user.email;
-    
     await connectDB();
-    const user = await User.findOne({ email: searchEmail });
+    const user = await User.findOne({ email: session.user.email });
     
     if (!user) {
       return NextResponse.json({ error: 'Utilisateur non trouvé' }, { status: 404 });
