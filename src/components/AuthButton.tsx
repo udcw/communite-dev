@@ -37,7 +37,7 @@ export default function AuthButton() {
               Mon profil
             </button>
             
-            {/* Nouveau bouton : Espace recruteur */}
+            {/* Espace recruteur */}
             <button
               onClick={() => {
                 setShowMenu(false);
