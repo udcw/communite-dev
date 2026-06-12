@@ -1,68 +1,49 @@
 'use client';
 
 import { 
-  FaTrophy, FaStar, FaCode, FaComments, FaHeart, FaChartLine, 
-  FaGitAlt, FaBrain, FaRocket, FaAward, FaDatabase, FaCloud, 
-  FaServer, FaLaptopCode, FaUserGraduate, FaCalendarCheck, 
-  FaClipboardCheck, FaShieldAlt, FaSeedling, FaAws
+  FaTrophy, FaStar, FaCode, FaComments, FaHeart, 
+  FaGitAlt, FaBrain, FaRocket, FaUserGraduate, 
+  FaClipboardCheck, FaShieldAlt, FaSeedling
 } from 'react-icons/fa';
 import { 
   SiTypescript, SiJavascript, SiReact, SiNextdotjs, SiNodedotjs, 
   SiPython, SiDocker, SiKubernetes, SiMongodb, SiPostgresql, 
-  SiTailwindcss, SiVuedotjs, SiAngular, SiPhp, SiLaravel,
-  SiGraphql, SiRedis, SiFirebase
+  SiTailwindcss
 } from 'react-icons/si';
 import { useState, useEffect } from 'react';
 
 interface ScoreData {
   globalScore: number;
   githubScore: number;
-  contributions: {
+  localData?: {
     posts: number;
     comments: number;
     likesReceived: number;
     technologies: number;
     skills: number;
   };
+  contributions?: {
+    posts: number;
+    comments: number;
+    likesReceived: number;
+  };
   technologyScores: Record<string, number>;
 }
 
-// Mapping des technologies vers leurs icônes
 const getTechIcon = (tech: string) => {
   const techLower = tech.toLowerCase();
-  
-  // React & Frameworks
   if (techLower.includes('react')) return <SiReact className="w-4 h-4 text-cyan-400" />;
   if (techLower.includes('next')) return <SiNextdotjs className="w-4 h-4 text-white" />;
-  if (techLower.includes('vue')) return <SiVuedotjs className="w-4 h-4 text-green-500" />;
-  if (techLower.includes('angular')) return <SiAngular className="w-4 h-4 text-red-500" />;
-  
-  // Langages
   if (techLower.includes('typescript')) return <SiTypescript className="w-4 h-4 text-blue-500" />;
   if (techLower.includes('javascript')) return <SiJavascript className="w-4 h-4 text-yellow-400" />;
   if (techLower.includes('python')) return <SiPython className="w-4 h-4 text-yellow-500" />;
-  if (techLower.includes('php')) return <SiPhp className="w-4 h-4 text-purple-400" />;
-  
-  // Backend
   if (techLower.includes('node')) return <SiNodedotjs className="w-4 h-4 text-green-500" />;
-  if (techLower.includes('laravel')) return <SiLaravel className="w-4 h-4 text-red-400" />;
-  if (techLower.includes('graphql')) return <SiGraphql className="w-4 h-4 text-pink-500" />;
-  
-  // Base de données
-  if (techLower.includes('mongodb')) return <SiMongodb className="w-4 h-4 text-green-500" />;
-  if (techLower.includes('postgresql')) return <SiPostgresql className="w-4 h-4 text-blue-400" />;
-  if (techLower.includes('redis')) return <SiRedis className="w-4 h-4 text-red-500" />;
-  
-  // DevOps & Cloud
   if (techLower.includes('docker')) return <SiDocker className="w-4 h-4 text-blue-400" />;
   if (techLower.includes('kubernetes')) return <SiKubernetes className="w-4 h-4 text-blue-400" />;
-  if (techLower.includes('aws')) return <FaAws className="w-4 h-4 text-orange-400" />;
-  if (techLower.includes('firebase')) return <SiFirebase className="w-4 h-4 text-yellow-500" />;
-  
-  // CSS
+  if (techLower.includes('mongodb')) return <SiMongodb className="w-4 h-4 text-green-500" />;
+  if (techLower.includes('postgresql')) return <SiPostgresql className="w-4 h-4 text-blue-400" />;
   if (techLower.includes('tailwind')) return <SiTailwindcss className="w-4 h-4 text-cyan-400" />;
-  
-  return <FaLaptopCode className="w-4 h-4 text-gray-400" />;
+  return <FaCode className="w-4 h-4 text-gray-400" />;
 };
 
 export default function ScoreCard({ email }: { email: string }) {
@@ -118,10 +99,12 @@ export default function ScoreCard({ email }: { email: string }) {
   };
 
   const level = getScoreLevel(score.globalScore);
+  const postsCount = score.localData?.posts || score.contributions?.posts || 0;
+  const commentsCount = score.localData?.comments || score.contributions?.comments || 0;
+  const likesCount = score.localData?.likesReceived || score.contributions?.likesReceived || 0;
 
   return (
     <div className="bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 rounded-2xl p-6 shadow-2xl border border-gray-700">
-      {/* En-tête */}
       <div className="text-center mb-6">
         <div className="inline-flex items-center gap-3 bg-gradient-to-r from-blue-500/20 to-purple-500/20 rounded-full px-4 py-2 mb-4">
           <FaBrain className="w-5 h-5 text-purple-400" />
@@ -129,26 +112,12 @@ export default function ScoreCard({ email }: { email: string }) {
         </div>
         
         <div className="relative inline-block">
-          {/* Cercle de progression */}
           <div className="relative w-32 h-32 mx-auto">
             <svg className="w-32 h-32 transform -rotate-90">
+              <circle cx="64" cy="64" r="58" stroke="rgba(255,255,255,0.05)" strokeWidth="8" fill="none" />
               <circle
-                cx="64"
-                cy="64"
-                r="58"
-                stroke="rgba(255,255,255,0.05)"
-                strokeWidth="8"
-                fill="none"
-              />
-              <circle
-                cx="64"
-                cy="64"
-                r="58"
-                stroke="url(#gradient)"
-                strokeWidth="8"
-                fill="none"
-                strokeDasharray="364.4"
-                strokeDashoffset={364.4 * (1 - score.globalScore / 100)}
+                cx="64" cy="64" r="58" stroke="url(#gradient)" strokeWidth="8" fill="none"
+                strokeDasharray="364.4" strokeDashoffset={364.4 * (1 - score.globalScore / 100)}
                 className="transition-all duration-1000"
               />
               <defs>
@@ -171,22 +140,21 @@ export default function ScoreCard({ email }: { email: string }) {
         </div>
       </div>
 
-      {/* Statistiques */}
       <div className="grid grid-cols-4 gap-2 mb-6">
         <div className="bg-gray-800/50 rounded-xl p-2 text-center border border-gray-700">
           <FaCode className="w-4 h-4 text-blue-400 mx-auto mb-1" />
-          <div className="text-lg font-bold text-white">{score.contributions.posts}</div>
+          <div className="text-lg font-bold text-white">{postsCount}</div>
           <div className="text-xs text-gray-400">Posts</div>
         </div>
         <div className="bg-gray-800/50 rounded-xl p-2 text-center border border-gray-700">
           <FaComments className="w-4 h-4 text-green-400 mx-auto mb-1" />
-          <div className="text-lg font-bold text-white">{score.contributions.comments}</div>
+          <div className="text-lg font-bold text-white">{commentsCount}</div>
           <div className="text-xs text-gray-400">Commentaires</div>
         </div>
         <div className="bg-gray-800/50 rounded-xl p-2 text-center border border-gray-700">
           <FaHeart className="w-4 h-4 text-red-400 mx-auto mb-1" />
-          <div className="text-lg font-bold text-white">{score.contributions.likesReceived}</div>
-          <div className="text-xs text-gray-400">Likes</div>
+          <div className="text-lg font-bold text-white">{likesCount}</div>
+          <div className="text-xs text-gray-400">Likes reçus</div>
         </div>
         <div className="bg-gray-800/50 rounded-xl p-2 text-center border border-gray-700">
           <FaGitAlt className="w-4 h-4 text-orange-400 mx-auto mb-1" />
@@ -195,7 +163,6 @@ export default function ScoreCard({ email }: { email: string }) {
         </div>
       </div>
 
-      {/* Scores par technologie */}
       {Object.keys(score.technologyScores).length > 0 && (
         <div>
           <div className="flex items-center gap-2 mb-4">
@@ -203,7 +170,7 @@ export default function ScoreCard({ email }: { email: string }) {
             <h3 className="text-sm font-semibold text-gray-300">Maîtrise technologique</h3>
           </div>
           <div className="space-y-3">
-            {Object.entries(score.technologyScores).map(([tech, techScore]) => (
+            {Object.entries(score.technologyScores).slice(0, 8).map(([tech, techScore]) => (
               <div key={tech}>
                 <div className="flex justify-between items-center mb-1">
                   <div className="flex items-center gap-2">
@@ -215,10 +182,7 @@ export default function ScoreCard({ email }: { email: string }) {
                   </span>
                 </div>
                 <div className="w-full bg-gray-700 rounded-full h-1.5">
-                  <div 
-                    className={`h-1.5 rounded-full transition-all duration-500 ${getScoreBg(techScore)}`}
-                    style={{ width: `${techScore}%` }}
-                  />
+                  <div className={`h-1.5 rounded-full transition-all duration-500 ${getScoreBg(techScore)}`} style={{ width: `${techScore}%` }} />
                 </div>
               </div>
             ))}
@@ -226,7 +190,6 @@ export default function ScoreCard({ email }: { email: string }) {
         </div>
       )}
 
-      {/* Badge final */}
       {score.globalScore >= 70 && (
         <div className="mt-6 pt-4 border-t border-gray-700 text-center">
           <div className="inline-flex items-center gap-2 bg-gradient-to-r from-amber-500/20 to-yellow-500/20 rounded-full px-4 py-2">
