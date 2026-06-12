@@ -57,28 +57,30 @@ export default function RecruitersPage() {
   };
 
   return (
-    <div className="max-w-6xl mx-auto relative">
-      {/* Bouton retour à l'accueil */}
-      <button
-        onClick={() => router.push('/')}
-        className="absolute top-0 left-0 flex items-center gap-2 px-3 py-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-white transition text-sm"
-      >
-        <FaHome className="w-4 h-4" />
-        Accueil
-      </button>
+    <div className="max-w-6xl mx-auto px-4 py-4">
+      {/* Bouton retour à l'accueil - mieux positionné */}
+      <div className="mb-6">
+        <button
+          onClick={() => router.push('/')}
+          className="inline-flex items-center gap-2 px-3 py-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-white transition text-sm rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800"
+        >
+          <FaHome className="w-4 h-4" />
+          Accueil
+        </button>
+      </div>
 
       {/* En-tête */}
       <div className="text-center mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
+        <h1 className="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white mb-2">
           Espace Recruteur
         </h1>
-        <p className="text-gray-600 dark:text-gray-400">
+        <p className="text-gray-600 dark:text-gray-400 text-sm md:text-base">
           Trouvez les meilleurs talents technologiques
         </p>
       </div>
 
       {/* Formulaire de recherche */}
-      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 mb-8">
+      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-4 md:p-6 mb-8">
         <form onSubmit={handleSearch} className="space-y-4">
           <div className="grid md:grid-cols-3 gap-4">
             <div>
@@ -91,7 +93,7 @@ export default function RecruitersPage() {
                 value={technology}
                 onChange={(e) => setTechnology(e.target.value)}
                 placeholder="Ex: React, Docker, TypeScript..."
-                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500"
+                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 text-sm"
               />
             </div>
             
@@ -105,7 +107,7 @@ export default function RecruitersPage() {
                 value={location}
                 onChange={(e) => setLocation(e.target.value)}
                 placeholder="Ex: Douala, Yaoundé, Paris..."
-                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500"
+                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 text-sm"
               />
             </div>
             
@@ -123,7 +125,7 @@ export default function RecruitersPage() {
                   onChange={(e) => setMinScore(parseInt(e.target.value))}
                   className="flex-1"
                 />
-                <span className={`w-12 text-center font-bold ${getScoreColor(minScore)}`}>
+                <span className={`w-12 text-center font-bold text-sm ${getScoreColor(minScore)}`}>
                   {minScore}%
                 </span>
               </div>
@@ -132,7 +134,7 @@ export default function RecruitersPage() {
           
           <button
             type="submit"
-            className="w-full md:w-auto px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition flex items-center justify-center gap-2"
+            className="w-full md:w-auto px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition flex items-center justify-center gap-2 text-sm md:text-base"
           >
             <FaSearch /> Rechercher des profils
           </button>
@@ -143,7 +145,7 @@ export default function RecruitersPage() {
       {searched && (
         <div>
           <div className="flex justify-between items-center mb-4">
-            <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
+            <h2 className="text-lg md:text-xl font-semibold text-gray-900 dark:text-white">
               {loading ? 'Recherche en cours...' : `${candidates.length} candidat(s) trouvé(s)`}
             </h2>
           </div>
@@ -162,12 +164,12 @@ export default function RecruitersPage() {
               {candidates.map((candidate) => (
                 <div
                   key={candidate._id}
-                  className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-5 hover:shadow-md transition"
+                  className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-4 md:p-5 hover:shadow-md transition"
                 >
-                  <div className="flex flex-wrap justify-between items-start gap-4">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-3 flex-wrap">
-                        <h3 className="text-lg font-bold text-gray-900 dark:text-white">
+                  <div className="flex flex-col md:flex-row justify-between items-start gap-4">
+                    <div className="flex-1 w-full">
+                      <div className="flex flex-wrap items-center gap-3">
+                        <h3 className="text-base md:text-lg font-bold text-gray-900 dark:text-white">
                           {candidate.name}
                         </h3>
                         <span className={`px-2 py-1 rounded-full text-xs font-bold text-white ${getScoreBg(candidate.estimatedScore)}`}>
@@ -211,19 +213,19 @@ export default function RecruitersPage() {
                       )}
                     </div>
                     
-                    <div className="flex flex-col gap-2">
+                    <div className="flex flex-row md:flex-col gap-2 w-full md:w-auto">
                       <a
                         href={candidate.profileUrl}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="flex items-center gap-2 px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition text-sm"
+                        className="flex-1 md:flex-none flex items-center justify-center gap-2 px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition text-sm"
                       >
                         <FaUser className="w-4 h-4" />
                         Voir le profil
                       </a>
                       <a
                         href={`mailto:${candidate.email}`}
-                        className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition text-sm"
+                        className="flex-1 md:flex-none flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition text-sm"
                       >
                         <FaEnvelope className="w-4 h-4" />
                         Contacter
@@ -238,4 +240,4 @@ export default function RecruitersPage() {
       )}
     </div>
   );
-} 
+}
