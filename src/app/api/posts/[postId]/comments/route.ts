@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth';
 import { connectDB } from '@/lib/mongodb';
 import Comment from '@/models/Comment';
 import Post from '@/models/Post';
+import Notification from '@/models/Notification';
 
 // GET - Récupérer les commentaires d'un post
 export async function GET(
@@ -41,6 +42,13 @@ export async function POST(
       return NextResponse.json({ error: 'Commentaire invalide (2-500 caractères)' }, { status: 400 });
     }
 
+    // Récupérer le post pour connaître l'auteur
+    const post = await Post.findById(postId);
+    
+    if (!post) {
+      return NextResponse.json({ error: 'Post non trouvé' }, { status: 404 });
+    }
+
     const comment = await Comment.create({
       content,
       authorId: session.user.email,
@@ -53,8 +61,22 @@ export async function POST(
     await Post.findByIdAndUpdate(postId, {
       $push: { comments: comment._id }
     });
-
+    
+    // Créer une notification pour l'auteur du post (sauf si c'est lui-même qui commente)
+    if (post.authorEmail !== session.user.email) {
+      await Notification.create({
+        userId: post.authorEmail,
+        type: 'comment',
+        fromUserId: session.user.email,
+        fromUserName: session.user.name,
+        postId: postId,
+        commentId: comment._id,
+        read: false
+      });
+    }
+    
     return NextResponse.json(comment, { status: 201 });
+    
   } catch (error) {
     console.error('Error creating comment:', error);
     return NextResponse.json({ error: 'Erreur serveur' }, { status: 500 });

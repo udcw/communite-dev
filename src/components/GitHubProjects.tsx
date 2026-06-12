@@ -33,7 +33,8 @@ export default function GitHubProjects({ username }: GitHubProjectsProps) {
       
       try {
         // Récupérer les repos GitHub
-        const res = await fetch(`https://api.github.com/users/${username}/repos?per_page=6&sort=updated&direction=desc`);
+        // Récupérer tous les repos
+	const res = await fetch(`https://api.github.com/users/${username}/repos?per_page=100&sort=updated&direction=desc`);
         
         if (!res.ok) {
           if (res.status === 404) {

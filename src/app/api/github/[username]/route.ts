@@ -19,8 +19,9 @@ export async function GET(
       return NextResponse.json({ error: 'Utilisateur GitHub non trouvé' }, { status: 404 });
     }
     
-    // Récupérer les repos (projets)
-    const reposRes = await fetch(`https://api.github.com/users/${username}/repos?per_page=10&sort=updated&direction=desc`);
+  
+   // Récupérer tous les repos (max 100)
+    const reposRes = await fetch(`https://api.github.com/users/${username}/repos?per_page=100&sort=updated&direction=desc`);
     const reposData = await reposRes.json();
     
     // Récupérer les contributions (commits récents)
@@ -41,8 +42,8 @@ export async function GET(
       });
     }
     
-    // Préparer les projets (top 6 repos)
-    const projects = Array.isArray(reposData) ? reposData.slice(0, 6).map((repo: any) => ({
+    // Préparer les projets - tous les repos (max 50)
+    const projects = Array.isArray(reposData) ? reposData.map((repo: any) => ({
       name: repo.name,
       description: repo.description || 'Aucune description',
       stars: repo.stargazers_count,

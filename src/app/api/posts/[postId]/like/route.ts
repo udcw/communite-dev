@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { connectDB } from '@/lib/mongodb';
 import Post from '@/models/Post';
+import Notification from '@/models/Notification';
 
 export async function POST(
   req: NextRequest,
@@ -34,6 +35,19 @@ export async function POST(
     }
 
     await post.save();
+    
+    // Créer une notification seulement si ce n'est pas l'auteur qui like son propre post
+    if (!hasLiked && post.authorEmail !== session.user.email) {
+      await Notification.create({
+        userId: post.authorEmail,
+        type: 'like',
+        fromUserId: session.user.email,
+        fromUserName: session.user.name,
+        postId: post._id,
+        read: false
+      });
+    }
+    
     return NextResponse.json({ likes: post.likes, liked: !hasLiked });
     
   } catch (error) {
