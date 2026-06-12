@@ -2,7 +2,7 @@
 
 import { useSession, signIn, signOut } from 'next-auth/react';
 import { useState } from 'react';
-import { FaGithub, FaSignOutAlt, FaUser, FaChevronDown } from 'react-icons/fa';
+import { FaGithub, FaSignOutAlt, FaUser, FaChevronDown, FaSearch } from 'react-icons/fa';
 import { useRouter } from 'next/navigation';
 
 export default function AuthButton() {
@@ -36,6 +36,19 @@ export default function AuthButton() {
               <FaUser className="w-4 h-4" />
               Mon profil
             </button>
+            
+            {/* Nouveau bouton : Espace recruteur */}
+            <button
+              onClick={() => {
+                setShowMenu(false);
+                router.push('/recruiters');
+              }}
+              className="flex items-center gap-2 w-full px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+            >
+              <FaSearch className="w-4 h-4" />
+              Espace recruteur
+            </button>
+            
             <button
               onClick={() => signOut()}
               className="flex items-center gap-2 w-full px-4 py-2 text-sm text-red-600 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
