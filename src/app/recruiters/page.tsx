@@ -1,7 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import { FaSearch, FaMapMarkerAlt, FaCode, FaStar, FaUser, FaEnvelope, FaExternalLinkAlt } from 'react-icons/fa';
+import { useRouter } from 'next/navigation';
+import { FaSearch, FaMapMarkerAlt, FaCode, FaStar, FaUser, FaEnvelope, FaHome } from 'react-icons/fa';
 
 interface Candidate {
   _id: string;
@@ -17,6 +18,7 @@ interface Candidate {
 }
 
 export default function RecruitersPage() {
+  const router = useRouter();
   const [technology, setTechnology] = useState('');
   const [location, setLocation] = useState('');
   const [minScore, setMinScore] = useState(50);
@@ -55,7 +57,16 @@ export default function RecruitersPage() {
   };
 
   return (
-    <div className="max-w-6xl mx-auto">
+    <div className="max-w-6xl mx-auto relative">
+      {/* Bouton retour à l'accueil */}
+      <button
+        onClick={() => router.push('/')}
+        className="absolute top-0 left-0 flex items-center gap-2 px-3 py-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-white transition text-sm"
+      >
+        <FaHome className="w-4 h-4" />
+        Accueil
+      </button>
+
       {/* En-tête */}
       <div className="text-center mb-8">
         <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
@@ -227,4 +238,4 @@ export default function RecruitersPage() {
       )}
     </div>
   );
-} 
+}
