@@ -238,4 +238,4 @@ export default function RecruitersPage() {
       )}
     </div>
   );
-}
+} 
