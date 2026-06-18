@@ -21,12 +21,20 @@ const handler = NextAuth({
             email: user.email,
             name: user.name,
             githubId: account.providerAccountId,
+            role: 'user', // rôle par défaut
           });
         }
       }
       return true;
     },
     async session({ session }) {
+      if (session.user?.email) {
+        await connectDB();
+        const dbUser = await User.findOne({ email: session.user.email });
+        if (dbUser) {
+          session.user.role = dbUser.role || 'user';
+        }
+      }
       return session;
     },
   },

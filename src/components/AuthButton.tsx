@@ -2,7 +2,7 @@
 
 import { useSession, signIn, signOut } from 'next-auth/react';
 import { useState } from 'react';
-import { FaGithub, FaSignOutAlt, FaUser, FaChevronDown, FaSearch } from 'react-icons/fa';
+import { FaGithub, FaSignOutAlt, FaUser, FaChevronDown, FaSearch, FaUserCog } from 'react-icons/fa';
 import { useRouter } from 'next/navigation';
 import NotificationBell from './NotificationBell';
 
@@ -14,7 +14,6 @@ export default function AuthButton() {
   if (session) {
     return (
       <div className="flex items-center gap-3">
-        {/* Cloche de notifications */}
         <NotificationBell />
         
         <div className="relative">
@@ -53,6 +52,20 @@ export default function AuthButton() {
                 <FaSearch className="w-4 h-4" />
                 Espace recruteur
               </button>
+
+              {/* Admin Dashboard - UNIQUEMENT pour les admins */}
+              {session?.user?.role === 'admin' && (
+                <button
+                  onClick={() => {
+                    setShowMenu(false);
+                    router.push('/admin');
+                  }}
+                  className="flex items-center gap-2 w-full px-4 py-2 text-sm text-purple-600 dark:text-purple-400 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors border-t border-gray-200 dark:border-gray-700"
+                >
+                  <FaUserCog className="w-4 h-4" />
+                  Admin Dashboard
+                </button>
+              )}
               
               <button
                 onClick={() => signOut()}
