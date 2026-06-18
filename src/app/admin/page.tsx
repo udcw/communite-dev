@@ -3,7 +3,11 @@
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
-import { FaUsers, FaFileAlt, FaComments, FaFlag, FaEye, FaTrash, FaUserCog } from 'react-icons/fa';
+import { 
+  FaUsers, FaFileAlt, FaComments, FaFlag, FaEye, 
+  FaTrash, FaUserCog, FaHome, FaShieldAlt, FaUser, 
+  FaEnvelope, FaCalendarAlt, FaCheckCircle, FaTimesCircle
+} from 'react-icons/fa';
 
 interface Stats {
   totalUsers: number;
@@ -29,7 +33,7 @@ interface Post {
 }
 
 export default function AdminPage() {
-  const { data: session } = useSession();
+  const { data: session, status } = useSession();
   const router = useRouter();
   const [stats, setStats] = useState<Stats | null>(null);
   const [users, setUsers] = useState<User[]>([]);
@@ -37,31 +41,36 @@ export default function AdminPage() {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'dashboard' | 'users' | 'posts'>('dashboard');
 
-  // Vérifier que l'utilisateur est admin
   useEffect(() => {
-    if (session && session.user?.role !== 'admin') {
+    if (status === 'loading') return;
+    
+    if (!session) {
       router.push('/');
+      return;
     }
-  }, [session, router]);
 
-  useEffect(() => {
+    if (session.user?.role !== 'admin') {
+      router.push('/');
+      return;
+    }
+
     const fetchData = async () => {
       try {
         const statsRes = await fetch('/api/admin/stats');
         const statsData = await statsRes.json();
         setStats(statsData.stats);
-        setRecentPosts(statsData.recentPosts);
+        setRecentPosts(statsData.recentPosts || []);
 
         const usersRes = await fetch('/api/admin/users');
         const usersData = await usersRes.json();
-        setUsers(usersData);
+        setUsers(Array.isArray(usersData) ? usersData : []);
       } catch (error) {
         console.error('Erreur:', error);
       }
       setLoading(false);
     };
     fetchData();
-  }, []);
+  }, [session, status, router]);
 
   const handleRoleChange = async (userId: string, newRole: string) => {
     await fetch('/api/admin/users', {
@@ -69,10 +78,9 @@ export default function AdminPage() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ userId, role: newRole })
     });
-    // Rafraîchir
     const usersRes = await fetch('/api/admin/users');
     const usersData = await usersRes.json();
-    setUsers(usersData);
+    setUsers(Array.isArray(usersData) ? usersData : []);
   };
 
   const handleDeletePost = async (postId: string) => {
@@ -82,28 +90,33 @@ export default function AdminPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ postId })
       });
-      // Rafraîchir
       const statsRes = await fetch('/api/admin/stats');
       const statsData = await statsRes.json();
-      setRecentPosts(statsData.recentPosts);
+      setRecentPosts(statsData.recentPosts || []);
     }
   };
 
-  if (loading) {
+  if (status === 'loading' || loading) {
     return <div className="text-center py-20">Chargement...</div>;
   }
 
-  if (!session) {
-    return <div className="text-center py-20">Veuillez vous connecter</div>;
-  }
-
-  if (session.user?.role !== 'admin') {
-    return <div className="text-center py-20">Accès refusé</div>;
+  if (!session || session.user?.role !== 'admin') {
+    return null;
   }
 
   return (
-    <div className="max-w-6xl mx-auto">
-      <h1 className="text-3xl font-bold mb-8">Dashboard Admin</h1>
+    <div className="max-w-6xl mx-auto px-4 py-8">
+      {/* En-tête avec bouton retour */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
+        <h1 className="text-3xl font-bold">Dashboard Admin</h1>
+        <button
+          onClick={() => router.push('/')}
+          className="flex items-center gap-2 px-4 py-2 text-sm text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition border border-gray-200 dark:border-gray-700"
+        >
+          <FaHome className="w-4 h-4" />
+          Retour à l'accueil
+        </button>
+      </div>
 
       {/* Stats Cards */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
@@ -146,7 +159,7 @@ export default function AdminPage() {
           onClick={() => setActiveTab('users')}
           className={`px-4 py-2 ${activeTab === 'users' ? 'border-b-2 border-blue-500 text-blue-500' : 'text-gray-500'}`}
         >
-          Utilisateurs
+          Utilisateurs ({stats?.totalUsers || 0})
         </button>
         <button
           onClick={() => setActiveTab('posts')}
@@ -158,59 +171,76 @@ export default function AdminPage() {
 
       {/* Users Tab */}
       {activeTab === 'users' && (
-        <div className="bg-white dark:bg-gray-800 rounded-xl border overflow-hidden">
-          <table className="w-full">
-            <thead className="bg-gray-50 dark:bg-gray-700">
-              <tr>
-                <th className="px-4 py-2 text-left text-sm">Nom</th>
-                <th className="px-4 py-2 text-left text-sm">Email</th>
-                <th className="px-4 py-2 text-left text-sm">Rôle</th>
-                <th className="px-4 py-2 text-left text-sm">Action</th>
-              </tr>
-            </thead>
-            <tbody>
-              {users.map((user) => (
-                <tr key={user._id} className="border-t">
-                  <td className="px-4 py-2 text-sm">{user.name}</td>
-                  <td className="px-4 py-2 text-sm">{user.email}</td>
-                  <td className="px-4 py-2 text-sm">
-                    <span className={`px-2 py-1 rounded-full text-xs ${user.role === 'admin' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'}`}>
-                      {user.role}
-                    </span>
-                  </td>
-                  <td className="px-4 py-2 text-sm">
-                    <button
-                      onClick={() => handleRoleChange(user._id, user.role === 'admin' ? 'user' : 'admin')}
-                      className="text-blue-500 hover:text-blue-700 text-sm"
-                    >
-                      <FaUserCog className="inline mr-1" />
-                      {user.role === 'admin' ? 'Retirer admin' : 'Promouvoir admin'}
-                    </button>
-                  </td>
+        <div className="bg-white dark:bg-gray-800 rounded-xl border overflow-x-auto">
+          {users.length === 0 ? (
+            <p className="text-center py-8 text-gray-500">Aucun utilisateur trouvé</p>
+          ) : (
+            <table className="w-full min-w-[600px]">
+              <thead className="bg-gray-50 dark:bg-gray-700">
+                <tr>
+                  <th className="px-4 py-3 text-left text-sm font-medium">Nom</th>
+                  <th className="px-4 py-3 text-left text-sm font-medium">Email</th>
+                  <th className="px-4 py-3 text-left text-sm font-medium">Rôle</th>
+                  <th className="px-4 py-3 text-left text-sm font-medium">Action</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {users.map((user) => (
+                  <tr key={user._id} className="border-t">
+                    <td className="px-4 py-3 text-sm">{user.name}</td>
+                    <td className="px-4 py-3 text-sm text-gray-600">{user.email}</td>
+                    <td className="px-4 py-3 text-sm">
+                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                        user.role === 'admin' 
+                          ? 'bg-green-100 text-green-700' 
+                          : 'bg-gray-100 text-gray-700'
+                      }`}>
+                        <FaShieldAlt className="inline mr-1 w-3 h-3" />
+                        {user.role === 'admin' ? 'Admin' : 'User'}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 text-sm">
+                      <button
+                        onClick={() => handleRoleChange(user._id, user.role === 'admin' ? 'user' : 'admin')}
+                        className={`px-3 py-1 rounded-lg text-xs font-medium transition ${
+                          user.role === 'admin'
+                            ? 'text-red-600 hover:bg-red-50'
+                            : 'text-blue-600 hover:bg-blue-50'
+                        }`}
+                      >
+                        {user.role === 'admin' ? 'Retirer admin' : 'Promouvoir admin'}
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
         </div>
       )}
 
       {/* Posts Tab */}
       {activeTab === 'posts' && (
         <div className="space-y-3">
-          {recentPosts.map((post) => (
-            <div key={post._id} className="bg-white dark:bg-gray-800 rounded-xl p-4 border flex justify-between items-center">
-              <div>
-                <p className="font-medium">{post.title}</p>
-                <p className="text-sm text-gray-500">par {post.authorName}</p>
+          {recentPosts.length === 0 ? (
+            <p className="text-gray-500 text-center py-8">Aucun post</p>
+          ) : (
+            recentPosts.map((post) => (
+              <div key={post._id} className="bg-white dark:bg-gray-800 rounded-xl p-4 border flex justify-between items-center">
+                <div>
+                  <p className="font-medium">{post.title}</p>
+                  <p className="text-sm text-gray-500">par {post.authorName}</p>
+                </div>
+                <button
+                  onClick={() => handleDeletePost(post._id)}
+                  className="text-red-500 hover:text-red-700 px-3 py-1 rounded-lg hover:bg-red-50 transition flex items-center gap-1"
+                >
+                  <FaTrash className="w-4 h-4" />
+                  Supprimer
+                </button>
               </div>
-              <button
-                onClick={() => handleDeletePost(post._id)}
-                className="text-red-500 hover:text-red-700"
-              >
-                <FaTrash />
-              </button>
-            </div>
-          ))}
+            ))
+          )}
         </div>
       )}
     </div>

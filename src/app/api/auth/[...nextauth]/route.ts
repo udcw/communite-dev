@@ -21,7 +21,7 @@ const handler = NextAuth({
             email: user.email,
             name: user.name,
             githubId: account.providerAccountId,
-            role: 'user', // rôle par défaut
+            role: 'user',
           });
         }
       }
@@ -37,6 +37,11 @@ const handler = NextAuth({
       }
       return session;
     },
+  },
+  // Rediriger vers la page d'accueil après connexion
+  pages: {
+    signIn: '/',
+    signOut: '/',
   },
   secret: process.env.NEXTAUTH_SECRET,
 });
