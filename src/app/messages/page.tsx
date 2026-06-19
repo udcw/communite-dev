@@ -32,16 +32,25 @@ export default function MessagesPage() {
   const [showNewChat, setShowNewChat] = useState(false);
 
   const fetchConversations = async () => {
-    const res = await fetch('/api/messages');
-    const data = await res.json();
-    setConversations(data);
+    try {
+      const res = await fetch('/api/messages');
+      const data = await res.json();
+      setConversations(Array.isArray(data) ? data : []);
+    } catch (error) {
+      console.error('Erreur chargement conversations:', error);
+    }
     setLoading(false);
   };
 
   const fetchConversation = async (conversationId: string) => {
-    const res = await fetch(`/api/messages/${conversationId}`);
-    const data = await res.json();
-    setSelectedConversation(data);
+    if (!conversationId) return;
+    try {
+      const res = await fetch(`/api/messages/${conversationId}`);
+      const data = await res.json();
+      setSelectedConversation(data);
+    } catch (error) {
+      console.error('Erreur chargement conversation:', error);
+    }
   };
 
   const sendMessage = async (e: React.FormEvent) => {
@@ -52,25 +61,37 @@ export default function MessagesPage() {
 
     if (!conversationId) {
       // Nouvelle conversation
-      const res = await fetch('/api/messages', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ recipientEmail, content: newMessage })
-      });
-      const data = await res.json();
-      conversationId = data._id;
-      setShowNewChat(false);
+      try {
+        const res = await fetch('/api/messages', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ recipientEmail, content: newMessage })
+        });
+        const data = await res.json();
+        conversationId = data._id;
+        setShowNewChat(false);
+      } catch (error) {
+        console.error('Erreur création conversation:', error);
+        return;
+      }
     } else {
       // Message existant
-      await fetch(`/api/messages/${conversationId}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ content: newMessage })
-      });
+      try {
+        await fetch(`/api/messages/${conversationId}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ content: newMessage })
+        });
+      } catch (error) {
+        console.error('Erreur envoi message:', error);
+        return;
+      }
     }
 
     setNewMessage('');
-    await fetchConversation(conversationId);
+    if (conversationId) {
+      await fetchConversation(conversationId);
+    }
     await fetchConversations();
   };
 
@@ -83,7 +104,7 @@ export default function MessagesPage() {
   }
 
   const otherParticipant = (conversation: Conversation) => {
-    return conversation.participants.find(p => p !== session.user.email) || '';
+    return conversation.participants.find(p => p !== session.user?.email) || 'Inconnu';
   };
 
   return (
@@ -119,15 +140,16 @@ export default function MessagesPage() {
                 onClick={() => {
                   if (recipientEmail) {
                     setShowNewChat(false);
-                    // Créer une conversation vide
                     fetch('/api/messages', {
                       method: 'POST',
                       headers: { 'Content-Type': 'application/json' },
                       body: JSON.stringify({ recipientEmail, content: '' })
                     }).then(async (res) => {
                       const data = await res.json();
-                      await fetchConversation(data._id);
-                      await fetchConversations();
+                      if (data._id) {
+                        await fetchConversation(data._id);
+                        await fetchConversations();
+                      }
                     });
                   }
                 }}
@@ -183,11 +205,11 @@ export default function MessagesPage() {
                 {selectedConversation.messages.map((msg, index) => (
                   <div
                     key={index}
-                    className={`flex ${msg.senderId === session.user.email ? 'justify-end' : 'justify-start'}`}
+                    className={`flex ${msg.senderId === session.user?.email ? 'justify-end' : 'justify-start'}`}
                   >
                     <div
                       className={`max-w-[70%] p-3 rounded-lg ${
-                        msg.senderId === session.user.email
+                        msg.senderId === session.user?.email
                           ? 'bg-blue-500 text-white'
                           : 'bg-gray-100 dark:bg-gray-700'
                       }`}
