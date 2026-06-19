@@ -1,6 +1,6 @@
 'use client';
 
-import { FaHeart, FaRegHeart, FaUser, FaCalendar, FaComment, FaEllipsisV, FaEdit, FaTrash } from 'react-icons/fa';
+import { FaHeart, FaRegHeart, FaUser, FaCalendar, FaComment, FaEllipsisV, FaEdit, FaTrash, FaFlag } from 'react-icons/fa';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import CommentSection from './CommentSection';
@@ -34,9 +34,10 @@ export default function PostCard({ post, userId, onLike, onDelete, onUpdate }: P
   const isLiked = post.likedBy.includes(userId);
   const isAuthor = userId === post.authorEmail;
 
-const goToProfile = () => {
-  router.push(`/profile/${post.authorEmail}`);
-};
+  const goToProfile = () => {
+    router.push(`/profile/${post.authorEmail}`);
+  };
+
   const handleDelete = async () => {
     if (confirm('Supprimer ce post ?')) {
       const res = await fetch(`/api/posts/${post._id}`, { method: 'DELETE' });
@@ -44,6 +45,27 @@ const goToProfile = () => {
         if (onDelete) onDelete(post._id);
         if (onUpdate) onUpdate();
         window.location.reload();
+      }
+    }
+  };
+
+  const handleReport = async () => {
+    const reason = prompt('Raison du signalement :');
+    if (reason) {
+      try {
+        const res = await fetch('/api/reports', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ postId: post._id, reason })
+        });
+        if (res.ok) {
+          alert('Post signalé !');
+        } else {
+          const data = await res.json();
+          alert(data.error || 'Erreur lors du signalement');
+        }
+      } catch (error) {
+        alert('Erreur lors du signalement');
       }
     }
   };
@@ -140,6 +162,17 @@ const goToProfile = () => {
             >
               {isLiked ? <FaHeart className="w-3.5 h-3.5" /> : <FaRegHeart className="w-3.5 h-3.5" />}
               <span className="font-medium">{post.likes}</span>
+            </button>
+          </div>
+
+          {/* Bouton Signaler */}
+          <div className="mt-3 flex justify-end">
+            <button
+              onClick={handleReport}
+              className="flex items-center gap-1 text-xs text-gray-400 hover:text-red-500 transition"
+            >
+              <FaFlag className="w-3.5 h-3.5" />
+              Signaler
             </button>
           </div>
 

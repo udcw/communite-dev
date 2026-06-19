@@ -32,14 +32,26 @@ interface Post {
   createdAt: string;
 }
 
+interface Report {
+  _id: string;
+  postId: string;
+  postTitle: string;
+  postAuthor: string;
+  reportedBy: string;
+  reason: string;
+  status: 'pending' | 'resolved' | 'rejected';
+  createdAt: string;
+}
+
 export default function AdminPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
   const [stats, setStats] = useState<Stats | null>(null);
   const [users, setUsers] = useState<User[]>([]);
   const [recentPosts, setRecentPosts] = useState<Post[]>([]);
+  const [reports, setReports] = useState<Report[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'users' | 'posts'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'users' | 'posts' | 'reports'>('dashboard');
 
   useEffect(() => {
     if (status === 'loading') return;
@@ -56,14 +68,29 @@ export default function AdminPage() {
 
     const fetchData = async () => {
       try {
+        // Stats
         const statsRes = await fetch('/api/admin/stats');
         const statsData = await statsRes.json();
         setStats(statsData.stats);
         setRecentPosts(statsData.recentPosts || []);
 
+        // Users
         const usersRes = await fetch('/api/admin/users');
         const usersData = await usersRes.json();
         setUsers(Array.isArray(usersData) ? usersData : []);
+
+        // Reports
+        const reportsRes = await fetch('/api/admin/reports');
+        const reportsData = await reportsRes.json();
+        setReports(reportsData.reports || []);
+        
+        // Mettre à jour pendingReports dans stats
+        if (statsData.stats) {
+          setStats(prev => ({
+            ...prev!,
+            pendingReports: reportsData.pendingCount || 0
+          }));
+        }
       } catch (error) {
         console.error('Erreur:', error);
       }
@@ -96,6 +123,18 @@ export default function AdminPage() {
     }
   };
 
+  const handleReportAction = async (reportId: string, status: string, action: string | null) => {
+    await fetch('/api/admin/reports', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ reportId, status, action })
+    });
+    // Rafraîchir
+    const reportsRes = await fetch('/api/admin/reports');
+    const reportsData = await reportsRes.json();
+    setReports(reportsData.reports || []);
+  };
+
   if (status === 'loading' || loading) {
     return <div className="text-center py-20">Chargement...</div>;
   }
@@ -103,6 +142,8 @@ export default function AdminPage() {
   if (!session || session.user?.role !== 'admin') {
     return null;
   }
+
+  const pendingCount = reports.filter(r => r.status === 'pending').length;
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-8">
@@ -142,30 +183,36 @@ export default function AdminPage() {
         </div>
         <div className="bg-white dark:bg-gray-800 rounded-xl p-4 shadow-sm border">
           <FaEye className="w-6 h-6 text-yellow-500 mb-2" />
-          <p className="text-2xl font-bold">{stats?.pendingReports || 0}</p>
+          <p className="text-2xl font-bold">{pendingCount}</p>
           <p className="text-sm text-gray-500">En attente</p>
         </div>
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-2 border-b mb-6">
+      <div className="flex gap-2 border-b mb-6 overflow-x-auto">
         <button
           onClick={() => setActiveTab('dashboard')}
-          className={`px-4 py-2 ${activeTab === 'dashboard' ? 'border-b-2 border-blue-500 text-blue-500' : 'text-gray-500'}`}
+          className={`px-4 py-2 whitespace-nowrap ${activeTab === 'dashboard' ? 'border-b-2 border-blue-500 text-blue-500' : 'text-gray-500'}`}
         >
           Dashboard
         </button>
         <button
           onClick={() => setActiveTab('users')}
-          className={`px-4 py-2 ${activeTab === 'users' ? 'border-b-2 border-blue-500 text-blue-500' : 'text-gray-500'}`}
+          className={`px-4 py-2 whitespace-nowrap ${activeTab === 'users' ? 'border-b-2 border-blue-500 text-blue-500' : 'text-gray-500'}`}
         >
           Utilisateurs ({stats?.totalUsers || 0})
         </button>
         <button
           onClick={() => setActiveTab('posts')}
-          className={`px-4 py-2 ${activeTab === 'posts' ? 'border-b-2 border-blue-500 text-blue-500' : 'text-gray-500'}`}
+          className={`px-4 py-2 whitespace-nowrap ${activeTab === 'posts' ? 'border-b-2 border-blue-500 text-blue-500' : 'text-gray-500'}`}
         >
           Posts récents
+        </button>
+        <button
+          onClick={() => setActiveTab('reports')}
+          className={`px-4 py-2 whitespace-nowrap ${activeTab === 'reports' ? 'border-b-2 border-blue-500 text-blue-500' : 'text-gray-500'}`}
+        >
+          Signalements ({pendingCount})
         </button>
       </div>
 
@@ -238,6 +285,63 @@ export default function AdminPage() {
                   <FaTrash className="w-4 h-4" />
                   Supprimer
                 </button>
+              </div>
+            ))
+          )}
+        </div>
+      )}
+
+      {/* Reports Tab */}
+      {activeTab === 'reports' && (
+        <div className="space-y-3">
+          {reports.length === 0 ? (
+            <p className="text-gray-500 text-center py-8">Aucun signalement</p>
+          ) : (
+            reports.map((report) => (
+              <div key={report._id} className="bg-white dark:bg-gray-800 rounded-xl p-4 border">
+                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-3">
+                  <div className="flex-1">
+                    <p className="font-medium">{report.postTitle}</p>
+                    <p className="text-sm text-gray-500">par {report.postAuthor}</p>
+                    <p className="text-sm text-gray-400">Signalé par {report.reportedBy}</p>
+                    <p className="text-sm text-gray-400">Raison : {report.reason}</p>
+                    <p className="text-xs text-gray-400 mt-1">
+                      {new Date(report.createdAt).toLocaleDateString('fr-FR')}
+                    </p>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {report.status === 'pending' && (
+                      <>
+                        <button
+                          onClick={() => handleReportAction(report._id, 'resolved', 'delete')}
+                          className="px-3 py-1 bg-red-500 text-white rounded-lg text-sm hover:bg-red-600 transition flex items-center gap-1"
+                        >
+                          <FaTrash className="w-3 h-3" />
+                          Supprimer le post
+                        </button>
+                        <button
+                          onClick={() => handleReportAction(report._id, 'rejected', null)}
+                          className="px-3 py-1 bg-gray-500 text-white rounded-lg text-sm hover:bg-gray-600 transition flex items-center gap-1"
+                        >
+                          <FaTimesCircle className="w-3 h-3" />
+                          Rejeter
+                        </button>
+                      </>
+                    )}
+                    {report.status === 'resolved' && (
+                      <span className="px-3 py-1 bg-green-500 text-white rounded-lg text-sm flex items-center gap-1">
+                        <FaCheckCircle className="w-3 h-3" />
+                        Résolu
+                      </span>
+                    )}
+                    {report.status === 'rejected' && (
+                      <span className="px-3 py-1 bg-gray-500 text-white rounded-lg text-sm flex items-center gap-1">
+                        <FaTimesCircle className="w-3 h-3" />
+                        Rejeté
+                      </span>
+                    )}
+                  </div>
+                </div>
               </div>
             ))
           )}
