@@ -16,7 +16,11 @@ const ReportSchema = new Schema<IReport>({
   postAuthor: { type: String, required: true },
   reportedBy: { type: String, required: true },
   reason: { type: String, required: true },
-  status: { type: String, enum: ['pending', 'resolved', 'rejected'], default: 'pending' },
+  status: { 
+    type: String, 
+    enum: ['pending', 'resolved', 'rejected'], 
+    default: 'pending' 
+  },
   createdAt: { type: Date, default: Date.now }
 });
 
