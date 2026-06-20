@@ -1,12 +1,9 @@
 'use client';
 
-export const dynamic = 'force-dynamic';
-
 import { useSession } from 'next-auth/react';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { FaComment, FaEnvelope, FaPaperPlane, FaUser } from 'react-icons/fa';
-import { useRouter } from 'next/navigation';
 
 interface Message {
   senderId: string;
@@ -24,9 +21,9 @@ interface Conversation {
   lastMessageAt: string;
 }
 
-export default function MessagesPage() {
+// Composant séparé qui utilise useSearchParams
+function MessagesContent() {
   const { data: session } = useSession();
-  const router = useRouter();
   const searchParams = useSearchParams();
   const toEmail = searchParams.get('to');
   
@@ -66,7 +63,6 @@ export default function MessagesPage() {
     let conversationId = selectedConversation?._id;
 
     if (!conversationId) {
-      // Nouvelle conversation
       try {
         const res = await fetch('/api/messages', {
           method: 'POST',
@@ -81,7 +77,6 @@ export default function MessagesPage() {
         return;
       }
     } else {
-      // Message existant
       try {
         await fetch(`/api/messages/${conversationId}`, {
           method: 'POST',
@@ -104,11 +99,9 @@ export default function MessagesPage() {
   useEffect(() => {
     fetchConversations();
     
-    // Si un destinataire est passé en paramètre, démarrer une conversation
     if (toEmail && session?.user?.email !== toEmail) {
       setRecipientEmail(toEmail);
       setShowNewChat(true);
-      // Créer automatiquement la conversation
       fetch('/api/messages', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -275,5 +268,14 @@ export default function MessagesPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+// Page principale avec Suspense
+export default function MessagesPage() {
+  return (
+    <Suspense fallback={<div className="text-center py-20">Chargement...</div>}>
+      <MessagesContent />
+    </Suspense>
   );
 }
