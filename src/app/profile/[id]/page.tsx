@@ -192,6 +192,17 @@ export default function ProfilePage() {
               </button>
             </div>
           )}
+
+          {/* Bouton Envoyer un message - visible pour tous sauf soi-même */}
+          {!isOwnProfile && userProfile?.email && (
+            <button
+              onClick={() => router.push(`/messages?to=${encodeURIComponent(email)}`)}
+              className="mt-3 px-4 py-2 bg-blue-600 text-white rounded-lg text-sm hover:bg-blue-700 transition flex items-center gap-2"
+            >
+              <FaEnvelope className="w-4 h-4" />
+              Envoyer un message
+            </button>
+          )}
         </div>
 
         {/* Bio */}

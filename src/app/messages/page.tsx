@@ -2,6 +2,7 @@
 
 import { useSession } from 'next-auth/react';
 import { useState, useEffect } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { FaComment, FaEnvelope, FaPaperPlane, FaUser, FaArrowLeft } from 'react-icons/fa';
 import { useRouter } from 'next/navigation';
 
@@ -24,6 +25,9 @@ interface Conversation {
 export default function MessagesPage() {
   const { data: session } = useSession();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const toEmail = searchParams.get('to');
+  
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [selectedConversation, setSelectedConversation] = useState<Conversation | null>(null);
   const [newMessage, setNewMessage] = useState('');
@@ -97,7 +101,25 @@ export default function MessagesPage() {
 
   useEffect(() => {
     fetchConversations();
-  }, []);
+    
+    // Si un destinataire est passé en paramètre, démarrer une conversation
+    if (toEmail && session?.user?.email !== toEmail) {
+      setRecipientEmail(toEmail);
+      setShowNewChat(true);
+      // Créer automatiquement la conversation
+      fetch('/api/messages', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ recipientEmail: toEmail, content: '' })
+      }).then(async (res) => {
+        const data = await res.json();
+        if (data._id) {
+          await fetchConversation(data._id);
+          await fetchConversations();
+        }
+      });
+    }
+  }, [toEmail, session]);
 
   if (!session) {
     return <div className="text-center py-20">Connectez-vous pour voir vos messages</div>;

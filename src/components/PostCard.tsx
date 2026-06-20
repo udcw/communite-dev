@@ -1,6 +1,6 @@
 'use client';
 
-import { FaHeart, FaRegHeart, FaUser, FaCalendar, FaComment, FaEllipsisV, FaEdit, FaTrash, FaFlag } from 'react-icons/fa';
+import { FaHeart, FaRegHeart, FaUser, FaCalendar, FaComment, FaEllipsisV, FaEdit, FaTrash, FaFlag, FaEnvelope } from 'react-icons/fa';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import CommentSection from './CommentSection';
@@ -70,6 +70,10 @@ export default function PostCard({ post, userId, onLike, onDelete, onUpdate }: P
     }
   };
 
+  const sendMessage = () => {
+    router.push(`/messages?to=${encodeURIComponent(post.authorEmail)}`);
+  };
+
   return (
     <>
       <div
@@ -115,6 +119,16 @@ export default function PostCard({ post, userId, onLike, onDelete, onUpdate }: P
                     >
                       <FaTrash className="w-4 h-4" />
                       Supprimer
+                    </button>
+                    <button
+                      onClick={() => {
+                        setShowMenu(false);
+                        sendMessage();
+                      }}
+                      className="flex items-center gap-2 w-full px-4 py-2 text-sm text-blue-600 hover:bg-gray-100 dark:hover:bg-gray-700 transition"
+                    >
+                      <FaEnvelope className="w-4 h-4" />
+                      Envoyer un message
                     </button>
                   </div>
                 )}
@@ -165,8 +179,8 @@ export default function PostCard({ post, userId, onLike, onDelete, onUpdate }: P
             </button>
           </div>
 
-          {/* Bouton Signaler */}
-          <div className="mt-3 flex justify-end">
+          {/* Boutons Signaler et Envoyer un message */}
+          <div className="mt-3 flex justify-end gap-4">
             <button
               onClick={handleReport}
               className="flex items-center gap-1 text-xs text-gray-400 hover:text-red-500 transition"
@@ -174,6 +188,15 @@ export default function PostCard({ post, userId, onLike, onDelete, onUpdate }: P
               <FaFlag className="w-3.5 h-3.5" />
               Signaler
             </button>
+            {!isAuthor && (
+              <button
+                onClick={sendMessage}
+                className="flex items-center gap-1 text-xs text-gray-400 hover:text-blue-500 transition"
+              >
+                <FaEnvelope className="w-3.5 h-3.5" />
+                Message
+              </button>
+            )}
           </div>
 
           {/* Section commentaires */}
