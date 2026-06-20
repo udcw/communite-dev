@@ -2,8 +2,8 @@
 
 import { useSession } from 'next-auth/react';
 import { useState, useEffect, Suspense } from 'react';
-import { useSearchParams } from 'next/navigation';
-import { FaComment, FaEnvelope, FaPaperPlane, FaUser } from 'react-icons/fa';
+import { useSearchParams, useRouter } from 'next/navigation';
+import { FaComment, FaEnvelope, FaPaperPlane, FaUser, FaArrowLeft } from 'react-icons/fa';
 
 interface Message {
   senderId: string;
@@ -21,9 +21,9 @@ interface Conversation {
   lastMessageAt: string;
 }
 
-// Composant séparé qui utilise useSearchParams
 function MessagesContent() {
   const { data: session } = useSession();
+  const router = useRouter();
   const searchParams = useSearchParams();
   const toEmail = searchParams.get('to');
   
@@ -126,10 +126,20 @@ function MessagesContent() {
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold mb-8 flex items-center gap-3">
-        <FaEnvelope className="text-blue-500" />
-        Messages
-      </h1>
+      {/* Bouton retour */}
+      <div className="flex items-center gap-3 mb-8">
+        <button
+          onClick={() => router.push('/')}
+          className="flex items-center gap-2 text-gray-500 hover:text-gray-700 dark:hover:text-white transition"
+        >
+          <FaArrowLeft className="w-4 h-4" />
+          Retour
+        </button>
+        <h1 className="text-3xl font-bold flex items-center gap-3">
+          <FaEnvelope className="text-blue-500" />
+          Messages
+        </h1>
+      </div>
 
       <div className="grid md:grid-cols-3 gap-6">
         {/* Liste des conversations */}
@@ -271,7 +281,6 @@ function MessagesContent() {
   );
 }
 
-// Page principale avec Suspense
 export default function MessagesPage() {
   return (
     <Suspense fallback={<div className="text-center py-20">Chargement...</div>}>
