@@ -1,9 +1,11 @@
 'use client';
 
+export const dynamic = 'force-dynamic';
+
 import { useSession } from 'next-auth/react';
 import { useState, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { FaComment, FaEnvelope, FaPaperPlane, FaUser, FaArrowLeft } from 'react-icons/fa';
+import { FaComment, FaEnvelope, FaPaperPlane, FaUser } from 'react-icons/fa';
 import { useRouter } from 'next/navigation';
 
 interface Message {
