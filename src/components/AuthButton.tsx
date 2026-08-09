@@ -39,17 +39,7 @@ export default function AuthButton() {
 
           {showMenu && (
             <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 py-1 z-10">
-              {/* Tableau de bord */}
-              <button
-                onClick={() => {
-                  setShowMenu(false);
-                  router.push("/dashboard");
-                }}
-                className="flex items-center gap-2 w-full px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-              >
-                <FaChartLine className="w-4 h-4" />
-                Tableau de bord
-              </button>
+              
 
               {/* Mon profil */}
               <button
