@@ -19,8 +19,8 @@ export async function GET() {
     const posts = await Post.find({ authorEmail: userEmail });
     const comments = await Comment.find({ authorEmail: userEmail });
 
-    console.log(`📝 ${posts.length} posts trouvés pour ${userEmail}`);
-    console.log(`💬 ${comments.length} commentaires trouvés`);
+    console.log(` ${posts.length} posts trouvés pour ${userEmail}`);
+    console.log(` ${comments.length} commentaires trouvés`);
 
     let likesReceived = 0;
     posts.forEach((post: any) => {
@@ -31,14 +31,14 @@ export async function GET() {
 
     posts.slice(0, 3).forEach((post: any) => {
       recentActivity.push({
-        message: `📝 Vous avez publié "${post.title}"`,
+        message: ` Vous avez publié "${post.title}"`,
         date: post.createdAt
       });
     });
 
     comments.slice(0, 3).forEach((comment: any) => {
       recentActivity.push({
-        message: `💬 Vous avez commenté un post`,
+        message: ` Vous avez commenté un post`,
         date: comment.createdAt
       });
     });
@@ -58,7 +58,7 @@ export async function GET() {
     });
 
   } catch (error) {
-    console.error('❌ Erreur dashboard:', error);
+    console.error(' Erreur dashboard:', error);
     return NextResponse.json({ error: 'Erreur serveur' }, { status: 500 });
   }
 }
