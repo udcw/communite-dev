@@ -7,6 +7,7 @@ import ScoreCard from '@/components/ScoreCard';
 import { FaUser, FaEnvelope, FaArrowLeft, FaFileAlt, FaMapMarkerAlt, FaBriefcase, FaGithub, FaLinkedin, FaGlobe } from 'react-icons/fa';
 import PostCard from '@/components/PostCard';
 import GitHubProjects from '@/components/GitHubProjects';
+import ScoreBadge from '@/components/ScoreBadge';
 
 interface Post {
   _id: string;
@@ -247,12 +248,20 @@ export default function ProfilePage() {
           </div>
         )}
 
-        {/* Statistiques */}
-        <div className="grid grid-cols-3 gap-3 mt-6">
-          <div className="text-center p-3 bg-gray-50 dark:bg-gray-800 rounded-xl">
-            <FaFileAlt className="w-5 h-5 text-blue-500 mx-auto mb-1" />
-            <p className="text-2xl font-bold">{posts.length}</p>
-            <p className="text-xs text-gray-500">Posts</p>
+        {/* Statistiques + ScoreBadge */}
+        <div className="mt-6 space-y-4">
+          <div className="grid grid-cols-3 gap-3">
+            <div className="text-center p-3 bg-gray-50 dark:bg-gray-800 rounded-xl">
+              <FaFileAlt className="w-5 h-5 text-blue-500 mx-auto mb-1" />
+              <p className="text-2xl font-bold">{posts.length}</p>
+              <p className="text-xs text-gray-500">Posts</p>
+            </div>
+            {/* Tu peux ajouter d'autres stats ici si besoin */}
+          </div>
+
+          {/* ScoreBadge en pleine largeur */}
+          <div>
+            <ScoreBadge email={email} />
           </div>
         </div>
 
