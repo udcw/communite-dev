@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-// QuizAPI.io - Clé gratuite à obtenir sur https://quizapi.io
-const QUIZ_API_KEY = process.env.QUIZ_API_KEY || 'votre_clé_api';
+const QUIZ_API_KEY = process.env.QUIZ_API_KEY || 'qa_sk_a4a554e366bb53cc6ddc1e03354fd49bdd120625';
 const QUIZ_API_URL = 'https://quizapi.io/api/v1/questions';
 
 // Catégories disponibles
@@ -42,6 +41,9 @@ export async function GET(req: NextRequest) {
 
     const data = await response.json();
 
+    // Mapping sécurisé des réponses correctes
+    const answerMap: Record<string, number> = { a: 0, b: 1, c: 2, d: 3 };
+
     // Transformer les données pour notre format
     const quizData = {
       id: `${category}-${Date.now()}`,
@@ -59,9 +61,9 @@ export async function GET(req: NextRequest) {
           q.answers.answer_c,
           q.answers.answer_d,
         ].filter(Boolean),
-        correctAnswer: q.correct_answer ? {
-          a: 0, b: 1, c: 2, d: 3
-        }[q.correct_answer] : 0,
+        correctAnswer: q.correct_answer && answerMap[q.correct_answer] !== undefined
+          ? answerMap[q.correct_answer]
+          : 0,
         explanation: q.explanation || ''
       }))
     };
@@ -120,7 +122,7 @@ function getFallbackQuiz(category: string) {
     level: 'medium',
     totalQuestions: quiz.questions.length,
     duration: Math.ceil(quiz.questions.length * 1.5),
-    questions: quiz.questions.map((q: any, index: number) => ({
+    questions: quiz.questions.map((q: any) => ({
       question: q.question,
       options: q.options,
       correctAnswer: q.correctAnswer,
