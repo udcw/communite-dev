@@ -1,100 +1,81 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-// QuizAPI.io - Clé gratuite à obtenir sur https://quizapi.io
-const QUIZ_API_KEY = process.env.QUIZ_API_KEY;
-const QUIZ_API_URL = 'https://quizapi.io/api/v1/questions';
+const OPENTDB_URL = 'https://opentdb.com/api.php';
 
-// GET - Récupérer les quiz disponibles
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const category = searchParams.get('category') || 'linux';
   const limit = parseInt(searchParams.get('limit') || '10');
   const difficulty = searchParams.get('difficulty') || 'medium';
 
-  // Vérifier si la clé API est définie
-  if (!QUIZ_API_KEY || QUIZ_API_KEY === 'votre_clé_api') {
-    console.warn('⚠️ QUIZ_API_KEY non définie ou invalide, utilisation du fallback');
-    return NextResponse.json(getFallbackQuiz(category));
-  }
+  // Mapping des catégories OpenTDB
+  const categoryMap: Record<string, number> = {
+    linux: 18,   // Computers
+    docker: 18,  // Computers
+    python: 18,  // Computers
+    javascript: 18,
+    react: 18,
+    nodejs: 18,
+    mongodb: 18,
+    git: 18,
+    aws: 18,
+    devops: 18,
+    kubernetes: 18,
+  };
 
   try {
-    // Construction de l'URL
-    const url = new URL(QUIZ_API_URL);
-    url.searchParams.append('apiKey', QUIZ_API_KEY);
-    url.searchParams.append('category', category);
-    url.searchParams.append('limit', String(limit));
+    const url = new URL(OPENTDB_URL);
+    url.searchParams.append('amount', String(limit));
+    url.searchParams.append('category', String(categoryMap[category] || 18));
     url.searchParams.append('difficulty', difficulty);
-    url.searchParams.append('_t', Date.now().toString()); // Anti-cache
+    url.searchParams.append('type', 'multiple');
+    url.searchParams.append('_t', Date.now().toString());
 
-    console.log(`🔍 Appel à QuizAPI: ${category}, ${difficulty}, ${limit} questions`);
+    console.log('📡 Appel à OpenTDB :', url.toString());
 
-    const response = await fetch(url.toString(), {
-      headers: {
-        'Cache-Control': 'no-cache, no-store, must-revalidate',
-        'Pragma': 'no-cache',
-        'Expires': '0',
-      },
-    });
+    const response = await fetch(url.toString());
 
     if (!response.ok) {
-      const errorText = await response.text();
-      console.error(`❌ Erreur API (${response.status}):`, errorText);
-      return NextResponse.json(getFallbackQuiz(category));
+      throw new Error(`Erreur OpenTDB: ${response.status}`);
     }
 
     const data = await response.json();
 
-    // Vérifier que les données sont valides
-    if (!data || !Array.isArray(data) || data.length === 0) {
-      console.warn('⚠️ Aucune question reçue, utilisation du fallback');
+    if (data.response_code !== 0 || !data.results || data.results.length === 0) {
+      console.warn('⚠️ Aucune question OpenTDB, fallback');
       return NextResponse.json(getFallbackQuiz(category));
     }
 
-    console.log(`✅ ${data.length} questions reçues de l'API`);
-
-    // Mélanger les questions pour plus de variété
-    const shuffledData = shuffleArray(data);
-
-    // Mapping sécurisé des réponses correctes
-    const answerMap: Record<string, number> = {
-      a: 0,
-      b: 1,
-      c: 2,
-      d: 3,
-    };
-
-    // Transformer les données pour notre format
+    // Transformer pour notre format
     const quizData = {
       id: `${category}-${Date.now()}`,
       title: `Quiz ${category.charAt(0).toUpperCase() + category.slice(1)}`,
       description: `Testez vos connaissances en ${category}`,
       category: category,
       level: difficulty,
-      totalQuestions: shuffledData.length,
-      duration: Math.ceil(shuffledData.length * 1.5),
-      questions: shuffledData.map((q: any) => ({
-        question: q.question || 'Question non disponible',
-        options: [
-          q.answers?.answer_a,
-          q.answers?.answer_b,
-          q.answers?.answer_c,
-          q.answers?.answer_d,
-        ].filter(Boolean),
-        correctAnswer: q.correct_answer && answerMap[q.correct_answer] !== undefined
-          ? answerMap[q.correct_answer]
-          : 0,
-        explanation: q.explanation || '',
-      })),
+      totalQuestions: data.results.length,
+      duration: Math.ceil(data.results.length * 1.5),
+      questions: data.results.map((q: any) => {
+        const options = [...q.incorrect_answers, q.correct_answer];
+        // Mélanger les options
+        const shuffledOptions = shuffleArray(options);
+        const correctIndex = shuffledOptions.indexOf(q.correct_answer);
+        return {
+          question: q.question.replace(/&quot;/g, '"').replace(/&#039;/g, "'").replace(/&amp;/g, '&'),
+          options: shuffledOptions.map((opt: string) => opt.replace(/&quot;/g, '"').replace(/&#039;/g, "'").replace(/&amp;/g, '&')),
+          correctAnswer: correctIndex,
+          explanation: `Réponse correcte : ${q.correct_answer}`,
+        };
+      }),
     };
 
     return NextResponse.json(quizData);
   } catch (error) {
-    console.error('❌ Erreur lors du fetch:', error);
+    console.error('❌ Erreur :', error);
     return NextResponse.json(getFallbackQuiz(category));
   }
 }
 
-// 🔥 Fonction pour mélanger un tableau
 function shuffleArray<T>(array: T[]): T[] {
   const shuffled = [...array];
   for (let i = shuffled.length - 1; i > 0; i--) {
@@ -104,9 +85,8 @@ function shuffleArray<T>(array: T[]): T[] {
   return shuffled;
 }
 
-// Quiz de fallback (si l'API ne répond pas)
 function getFallbackQuiz(category: string) {
-  const fallbackQuestions: Record<string, any> = {
+  const fallbacks: Record<string, any> = {
     linux: {
       title: 'Quiz Linux',
       description: 'Testez vos connaissances en Linux',
@@ -122,24 +102,6 @@ function getFallbackQuiz(category: string) {
           options: ['Super User DO', 'System User DO', 'Simple User DO', 'Standard User DO'],
           correctAnswer: 0,
           explanation: 'sudo permet d\'exécuter une commande avec les privilèges superutilisateur.'
-        },
-        {
-          question: 'Quel est le système de gestion de paquets utilisé par Debian ?',
-          options: ['apt', 'yum', 'pacman', 'zypper'],
-          correctAnswer: 0,
-          explanation: 'Debian utilise apt (Advanced Package Tool) comme gestionnaire de paquets.'
-        },
-        {
-          question: 'Quelle commande permet de changer les permissions d\'un fichier ?',
-          options: ['chmod', 'chown', 'chgrp', 'chattr'],
-          correctAnswer: 0,
-          explanation: 'chmod (change mode) permet de modifier les permissions d\'un fichier.'
-        },
-        {
-          question: 'Quel est le shell par défaut dans la plupart des distributions Linux ?',
-          options: ['bash', 'zsh', 'fish', 'tcsh'],
-          correctAnswer: 0,
-          explanation: 'bash (Bourne Again SHell) est le shell par défaut dans la plupart des distributions Linux.'
         }
       ]
     },
@@ -152,63 +114,14 @@ function getFallbackQuiz(category: string) {
           options: ['docker ps', 'docker list', 'docker show', 'docker containers'],
           correctAnswer: 0,
           explanation: 'docker ps liste les containers en cours d\'exécution.'
-        },
-        {
-          question: 'Que signifie l\'option `-d` dans `docker run` ?',
-          options: ['Detached mode', 'Debug mode', 'Delete after run', 'Download image'],
-          correctAnswer: 0,
-          explanation: '`-d` signifie "detached mode" : le container tourne en arrière-plan.'
-        },
-        {
-          question: 'Quelle est la différence entre une image et un container ?',
-          options: [
-            'Une image est un modèle, un container est une instance',
-            'Un container est un modèle, une image est une instance',
-            'C\'est la même chose',
-            'Une image est pour le développement, un container pour la production'
-          ],
-          correctAnswer: 0,
-          explanation: 'Une image Docker est un modèle statique, un container est une instance en cours d\'exécution de cette image.'
-        },
-        {
-          question: 'Quelle commande permet de construire une image Docker ?',
-          options: ['docker build', 'docker create', 'docker image', 'docker make'],
-          correctAnswer: 0,
-          explanation: 'docker build construit une image à partir d\'un Dockerfile.'
-        }
-      ]
-    },
-    javascript: {
-      title: 'Quiz JavaScript',
-      description: 'Testez vos connaissances en JavaScript',
-      questions: [
-        {
-          question: 'Quel mot-clé permet de déclarer une variable en JavaScript ?',
-          options: ['let', 'var', 'const', 'Toutes les réponses'],
-          correctAnswer: 3,
-          explanation: 'JavaScript permet de déclarer des variables avec let, var et const.'
-        },
-        {
-          question: 'Quelle méthode permet de transformer un tableau ?',
-          options: ['map()', 'filter()', 'reduce()', 'Toutes les réponses'],
-          correctAnswer: 3,
-          explanation: 'map(), filter() et reduce() sont des méthodes de transformation de tableau.'
-        },
-        {
-          question: 'Que retourne `typeof null` en JavaScript ?',
-          options: ['"null"', '"object"', '"undefined"', '"number"'],
-          correctAnswer: 1,
-          explanation: 'typeof null retourne "object" en JavaScript (bug historique).'
         }
       ]
     }
   };
 
-  // Sélectionner le fallback correspondant à la catégorie
-  const quiz = fallbackQuestions[category] || fallbackQuestions.linux;
-
+  const quiz = fallbacks[category] || fallbacks.linux;
   return {
-    id: `${category}-fallback-${Date.now()}`,
+    id: `fallback-${Date.now()}`,
     title: quiz.title,
     description: quiz.description,
     category,
