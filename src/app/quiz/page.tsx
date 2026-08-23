@@ -1,7 +1,8 @@
 'use client';
-
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useSession } from 'next-auth/react';
+import html2canvas from 'html2canvas';
+import jsPDF from 'jspdf';
 import {
   FaTrophy,
   FaClock,
@@ -25,8 +26,12 @@ import {
   FaArrowRight,
   FaArrowLeft,
   FaSpinner,
+  FaDownload,
+  FaFilePdf,
+  FaImage,
 } from 'react-icons/fa';
 import { SiKubernetes } from 'react-icons/si';
+import Certificate from '@/components/Certificate';
 
 const CATEGORIES = [
   { value: 'linux', label: 'Linux', icon: <FaLinux className="w-4 h-4" /> },
@@ -68,6 +73,8 @@ interface QuizData {
 
 export default function QuizPage() {
   const { data: session } = useSession();
+  const certRef = useRef<HTMLDivElement>(null);
+
   const [selectedCategory, setSelectedCategory] = useState('linux');
   const [selectedDifficulty, setSelectedDifficulty] = useState('medium');
   const [questionsCount, setQuestionsCount] = useState(10);
@@ -82,7 +89,7 @@ export default function QuizPage() {
   const [quizHistory, setQuizHistory] = useState<any[]>([]);
   const [fetchError, setFetchError] = useState<string | null>(null);
 
-  // Charger l'historique des certifications (optionnel, ignore si 404)
+  // Charger l'historique des certifications (optionnel)
   useEffect(() => {
     const fetchHistory = async () => {
       if (!session) return;
@@ -98,6 +105,36 @@ export default function QuizPage() {
     };
     fetchHistory();
   }, [session]);
+
+  // Télécharger le certificat en image
+  const downloadAsImage = async () => {
+    if (!certRef.current) return;
+    try {
+      const canvas = await html2canvas(certRef.current);
+      const link = document.createElement('a');
+      link.download = `certificat-${quiz?.title || 'quiz'}.png`;
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+    } catch (error) {
+      console.error('Erreur téléchargement image:', error);
+    }
+  };
+
+  // Télécharger le certificat en PDF
+  const downloadAsPDF = async () => {
+    if (!certRef.current) return;
+    try {
+      const canvas = await html2canvas(certRef.current);
+      const imgData = canvas.toDataURL('image/png');
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+      pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+      pdf.save(`certificat-${quiz?.title || 'quiz'}.pdf`);
+    } catch (error) {
+      console.error('Erreur téléchargement PDF:', error);
+    }
+  };
 
   const fetchQuiz = useCallback(async () => {
     if (loading) return;
@@ -212,18 +249,44 @@ export default function QuizPage() {
           </h2>
           <p className="text-lg mb-4">
             Score : <span className="font-bold">{result.score}%</span>
+            {result.passed && <span className="text-sm text-green-600 ml-2">(Certifié)</span>}
           </p>
           <p className="text-sm text-gray-500">
             {result.correctAnswers} / {result.totalQuestions} bonnes réponses
           </p>
+
           {result.passed && (
-            <div className="mt-4 p-4 bg-green-100 dark:bg-green-900/30 rounded-lg flex items-center justify-center gap-2">
-              <FaTrophy className="w-5 h-5 text-yellow-500" />
-              <p className="text-green-700 dark:text-green-300">
-                Certification obtenue pour {quiz?.title} !
-              </p>
+            <div className="mt-6">
+              {/* Certificat */}
+              <div ref={certRef}>
+                <Certificate
+                  userName={session?.user?.name || 'Utilisateur'}
+                  quizTitle={quiz?.title || 'Quiz'}
+                  score={result.score}
+                  date={new Date().toISOString()}
+                />
+              </div>
+
+              {/* Boutons de téléchargement */}
+              <div className="flex flex-wrap justify-center gap-3 mt-4">
+                <button
+                  onClick={downloadAsImage}
+                  className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
+                >
+                  <FaImage className="w-4 h-4" />
+                  Télécharger en image
+                </button>
+                <button
+                  onClick={downloadAsPDF}
+                  className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition"
+                >
+                  <FaFilePdf className="w-4 h-4" />
+                  Télécharger en PDF
+                </button>
+              </div>
             </div>
           )}
+
           <button
             onClick={() => {
               setStarted(false);
@@ -231,7 +294,7 @@ export default function QuizPage() {
               setQuiz(null);
               setFetchError(null);
             }}
-            className="mt-4 px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-2 mx-auto"
+            className="mt-6 px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-2 mx-auto"
           >
             <FaArrowRight className="w-4 h-4" />
             Nouveau quiz

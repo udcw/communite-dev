@@ -29,9 +29,9 @@ export async function POST(req: NextRequest) {
 
     const totalQuestions = questions.length;
     const score = Math.round((correctCount / totalQuestions) * 100);
-    const passed = score >= 70;
+    const passed = score >= 80; // 🔥 Seuil à 80%
 
-    // Enregistrer la certification en base
+    // Enregistrer la certification
     const certification = await Certification.create({
       userId: session.user.email,
       userName: session.user.name || 'Utilisateur',
