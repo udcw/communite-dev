@@ -1,4 +1,3 @@
-// src/app/dashboard/page.tsx
 'use client';
 
 import { useSession } from "next-auth/react";
@@ -13,6 +12,7 @@ import {
   FaCalendar,
 } from "react-icons/fa";
 import ScoreBadge from "@/components/ScoreBadge";
+
 
 interface Stats {
   posts: number;
@@ -69,7 +69,7 @@ export default function DashboardPage() {
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-3xl font-bold">Tableau de bord</h1>
         <span className="text-sm text-gray-500">
-          Bienvenue {session?.user?.name} 👋
+          Bienvenue {session?.user?.name} 
         </span>
       </div>
 
