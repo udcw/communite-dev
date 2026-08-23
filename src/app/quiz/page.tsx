@@ -1,7 +1,7 @@
-"use client";
+'use client';
 
-import { useState, useEffect } from "react";
-import { useSession } from "next-auth/react";
+import { useState, useEffect, useCallback } from 'react';
+import { useSession } from 'next-auth/react';
 import {
   FaTrophy,
   FaClock,
@@ -24,51 +24,28 @@ import {
   FaServer,
   FaArrowRight,
   FaArrowLeft,
-} from "react-icons/fa";
-import { SiKubernetes } from "react-icons/si";
+  FaSpinner,
+} from 'react-icons/fa';
+import { SiKubernetes } from 'react-icons/si';
 
 const CATEGORIES = [
-  { value: "linux", label: "Linux", icon: <FaLinux className="w-4 h-4" /> },
-  { value: "docker", label: "Docker", icon: <FaDocker className="w-4 h-4" /> },
-  {
-    value: "kubernetes",
-    label: "Kubernetes",
-    icon: <SiKubernetes className="w-4 h-4" />,
-  },
-  { value: "devops", label: "DevOps", icon: <FaRocket className="w-4 h-4" /> },
-  { value: "python", label: "Python", icon: <FaPython className="w-4 h-4" /> },
-  {
-    value: "javascript",
-    label: "JavaScript",
-    icon: <FaJs className="w-4 h-4" />,
-  },
-  { value: "react", label: "React", icon: <FaReact className="w-4 h-4" /> },
-  { value: "nodejs", label: "Node.js", icon: <FaNodeJs className="w-4 h-4" /> },
-  {
-    value: "mongodb",
-    label: "MongoDB",
-    icon: <FaDatabase className="w-4 h-4" />,
-  },
-  { value: "git", label: "Git", icon: <FaGitAlt className="w-4 h-4" /> },
-  { value: "aws", label: "AWS", icon: <FaAws className="w-4 h-4" /> },
+  { value: 'linux', label: 'Linux', icon: <FaLinux className="w-4 h-4" /> },
+  { value: 'docker', label: 'Docker', icon: <FaDocker className="w-4 h-4" /> },
+  { value: 'kubernetes', label: 'Kubernetes', icon: <SiKubernetes className="w-4 h-4" /> },
+  { value: 'devops', label: 'DevOps', icon: <FaRocket className="w-4 h-4" /> },
+  { value: 'python', label: 'Python', icon: <FaPython className="w-4 h-4" /> },
+  { value: 'javascript', label: 'JavaScript', icon: <FaJs className="w-4 h-4" /> },
+  { value: 'react', label: 'React', icon: <FaReact className="w-4 h-4" /> },
+  { value: 'nodejs', label: 'Node.js', icon: <FaNodeJs className="w-4 h-4" /> },
+  { value: 'mongodb', label: 'MongoDB', icon: <FaDatabase className="w-4 h-4" /> },
+  { value: 'git', label: 'Git', icon: <FaGitAlt className="w-4 h-4" /> },
+  { value: 'aws', label: 'AWS', icon: <FaAws className="w-4 h-4" /> },
 ];
 
 const DIFFICULTIES = [
-  {
-    value: "easy",
-    label: "Débutant",
-    icon: <FaSeedling className="w-4 h-4" />,
-  },
-  {
-    value: "medium",
-    label: "Intermédiaire",
-    icon: <FaBookOpen className="w-4 h-4" />,
-  },
-  {
-    value: "hard",
-    label: "Avancé",
-    icon: <FaGraduationCap className="w-4 h-4" />,
-  },
+  { value: 'easy', label: 'Débutant', icon: <FaSeedling className="w-4 h-4" /> },
+  { value: 'medium', label: 'Intermédiaire', icon: <FaBookOpen className="w-4 h-4" /> },
+  { value: 'hard', label: 'Avancé', icon: <FaGraduationCap className="w-4 h-4" /> },
 ];
 
 interface QuizQuestion {
@@ -91,8 +68,8 @@ interface QuizData {
 
 export default function QuizPage() {
   const { data: session } = useSession();
-  const [selectedCategory, setSelectedCategory] = useState("linux");
-  const [selectedDifficulty, setSelectedDifficulty] = useState("medium");
+  const [selectedCategory, setSelectedCategory] = useState('linux');
+  const [selectedDifficulty, setSelectedDifficulty] = useState('medium');
   const [questionsCount, setQuestionsCount] = useState(10);
   const [quiz, setQuiz] = useState<QuizData | null>(null);
   const [currentQuestion, setCurrentQuestion] = useState(0);
@@ -103,37 +80,58 @@ export default function QuizPage() {
   const [loading, setLoading] = useState(false);
   const [timeLeft, setTimeLeft] = useState(0);
   const [quizHistory, setQuizHistory] = useState<any[]>([]);
+  const [fetchError, setFetchError] = useState<string | null>(null);
 
-  // Charger l'historique des certifications
+  // Charger l'historique des certifications (optionnel, ignore si 404)
   useEffect(() => {
     const fetchHistory = async () => {
-      if (session) {
-        const res = await fetch("/api/user/certifications");
-        const data = await res.json();
-        setQuizHistory(data || []);
+      if (!session) return;
+      try {
+        const res = await fetch('/api/user/certifications');
+        if (res.ok) {
+          const data = await res.json();
+          setQuizHistory(data || []);
+        }
+      } catch {
+        // Ignorer silencieusement
       }
     };
     fetchHistory();
   }, [session]);
 
-  const fetchQuiz = async () => {
+  const fetchQuiz = useCallback(async () => {
+    if (loading) return;
     setLoading(true);
+    setFetchError(null);
     try {
       const res = await fetch(
-        `/api/quiz?category=${selectedCategory}&limit=${questionsCount}&difficulty=${selectedDifficulty}`,
+        `/api/quiz?category=${selectedCategory}&limit=${questionsCount}&difficulty=${selectedDifficulty}`
       );
+      if (!res.ok) {
+        let errorMsg = `Erreur ${res.status}`;
+        try {
+          const text = await res.text();
+          if (text) errorMsg += ` : ${text}`;
+        } catch {}
+        throw new Error(errorMsg);
+      }
       const data = await res.json();
+      if (!data.questions || data.questions.length === 0) {
+        throw new Error('Aucune question reçue');
+      }
       setQuiz(data);
       setAnswers(new Array(data.questions.length).fill(-1));
       setCurrentQuestion(0);
       setStarted(true);
       setTimeLeft(data.duration * 60);
       setFinished(false);
-    } catch (error) {
-      console.error("Erreur chargement quiz:", error);
+    } catch (error: any) {
+      console.error('Erreur chargement quiz:', error);
+      setFetchError(error.message || 'Erreur inconnue');
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
-  };
+  }, [selectedCategory, selectedDifficulty, questionsCount, loading]);
 
   const handleAnswer = (index: number) => {
     const newAnswers = [...answers];
@@ -151,22 +149,43 @@ export default function QuizPage() {
 
   const submitQuiz = async () => {
     if (!quiz) return;
-    const res = await fetch("/api/quiz/submit", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        quizId: quiz.id,
-        quizTitle: quiz.title,
-        category: quiz.category,
-        level: quiz.level,
-        answers,
-        questions: quiz.questions,
-      }),
-    });
-    const data = await res.json();
-    setResult(data);
-    setFinished(true);
+    try {
+      const res = await fetch('/api/quiz/submit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          quizId: quiz.id,
+          quizTitle: quiz.title,
+          category: quiz.category,
+          level: quiz.level,
+          answers,
+          questions: quiz.questions,
+        }),
+      });
+      const data = await res.json();
+      setResult(data);
+      setFinished(true);
+    } catch (error) {
+      console.error('Erreur soumission:', error);
+      setFetchError('Erreur lors de la soumission du quiz');
+    }
   };
+
+  // Timer du quiz
+  useEffect(() => {
+    if (!started || finished) return;
+    const timer = setInterval(() => {
+      setTimeLeft((prev) => {
+        if (prev <= 1) {
+          clearInterval(timer);
+          submitQuiz();
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [started, finished]);
 
   if (!session) {
     return (
@@ -189,7 +208,7 @@ export default function QuizPage() {
             )}
           </div>
           <h2 className="text-2xl font-bold mb-2">
-            {result.passed ? "Félicitations !" : "Continue à t'entraîner !"}
+            {result.passed ? 'Félicitations !' : 'Continue à t\'entraîner !'}
           </h2>
           <p className="text-lg mb-4">
             Score : <span className="font-bold">{result.score}%</span>
@@ -210,6 +229,7 @@ export default function QuizPage() {
               setStarted(false);
               setFinished(false);
               setQuiz(null);
+              setFetchError(null);
             }}
             className="mt-4 px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-2 mx-auto"
           >
@@ -251,8 +271,8 @@ export default function QuizPage() {
                   onClick={() => handleAnswer(index)}
                   className={`w-full text-left px-4 py-3 rounded-lg border transition flex items-center gap-3 ${
                     answers[currentQuestion] === index
-                      ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20"
-                      : "border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700"
+                      ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
+                      : 'border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700'
                   }`}
                 >
                   <span className="w-6 h-6 rounded-full border border-gray-300 dark:border-gray-600 flex items-center justify-center text-sm flex-shrink-0">
@@ -267,17 +287,14 @@ export default function QuizPage() {
           <div className="flex justify-between items-center">
             <div className="text-sm text-gray-500 flex items-center gap-1">
               <FaClock className="w-4 h-4" />
-              {Math.floor(timeLeft / 60)}:
-              {String(timeLeft % 60).padStart(2, "0")}
+              {Math.floor(timeLeft / 60)}:{String(timeLeft % 60).padStart(2, '0')}
             </div>
             <button
               onClick={nextQuestion}
               disabled={answers[currentQuestion] === -1}
               className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
             >
-              {currentQuestion === quiz.questions.length - 1
-                ? "Terminer"
-                : "Suivant"}
+              {currentQuestion === quiz.questions.length - 1 ? 'Terminer' : 'Suivant'}
               <FaArrowRight className="w-4 h-4" />
             </button>
           </div>
@@ -343,13 +360,20 @@ export default function QuizPage() {
               className="w-full px-3 py-2 border rounded-lg dark:bg-gray-900"
             >
               {[5, 10, 15, 20].map((n) => (
-                <option key={n} value={n}>
-                  {n} questions
-                </option>
+                <option key={n} value={n}>{n} questions</option>
               ))}
             </select>
           </div>
         </div>
+
+        {fetchError && (
+          <div className="mt-4 p-3 bg-red-100 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 rounded-lg text-sm">
+            <p className="flex items-center gap-2">
+              <FaTimesCircle className="w-4 h-4" />
+              {fetchError}
+            </p>
+          </div>
+        )}
 
         <button
           onClick={fetchQuiz}
@@ -358,7 +382,7 @@ export default function QuizPage() {
         >
           {loading ? (
             <>
-              <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+              <FaSpinner className="w-4 h-4 animate-spin" />
               Chargement...
             </>
           ) : (
@@ -379,13 +403,12 @@ export default function QuizPage() {
           </h3>
           <div className="space-y-2">
             {quizHistory.map((cert: any) => (
-              <div
-                key={cert._id}
-                className="flex items-center justify-between p-2 border-b"
-              >
+              <div key={cert._id} className="flex items-center justify-between p-2 border-b">
                 <div className="flex items-center gap-3">
                   <span className="font-medium">{cert.quizTitle}</span>
-                  <span className="text-sm text-gray-500">{cert.score}%</span>
+                  <span className="text-sm text-gray-500">
+                    {cert.score}%
+                  </span>
                   {cert.passed && (
                     <FaCheckCircle className="w-4 h-4 text-green-500" />
                   )}
