@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
@@ -12,7 +12,6 @@ import {
   FaCalendar,
 } from "react-icons/fa";
 import ScoreBadge from "@/components/ScoreBadge";
-
 
 interface Stats {
   posts: number;
@@ -69,7 +68,7 @@ export default function DashboardPage() {
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-3xl font-bold">Tableau de bord</h1>
         <span className="text-sm text-gray-500">
-          Bienvenue {session?.user?.name} 
+          Bienvenue {session?.user?.name}
         </span>
       </div>
 
@@ -100,6 +99,13 @@ export default function DashboardPage() {
       {/* ScoreBadge - en dehors de la grille */}
       <div className="mb-8">
         <ScoreBadge />
+      </div>
+      <div className="bg-gradient-to-r from-blue-500 to-purple-600 rounded-xl p-6 text-white">
+        <h3 className="font-bold"> Quiz du jour</h3>
+        <p className="text-sm opacity-90">Testez vos connaissances en React</p>
+        <button className="mt-2 px-4 py-1 bg-white text-blue-600 rounded-lg text-sm font-semibold">
+          Commencer
+        </button>
       </div>
 
       {/* Activité récente */}

@@ -1,7 +1,7 @@
 "use client";
 
 import { useSession, signIn, signOut } from "next-auth/react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   FaGithub,
   FaSignOutAlt,
@@ -11,6 +11,7 @@ import {
   FaUserCog,
   FaEnvelope,
   FaChartLine,
+  FaCode,
 } from "react-icons/fa";
 import { useRouter } from "next/navigation";
 import NotificationBell from "./NotificationBell";
@@ -19,6 +20,21 @@ export default function AuthButton() {
   const { data: session } = useSession();
   const router = useRouter();
   const [showMenu, setShowMenu] = useState(false);
+  const [quizzesCount, setQuizzesCount] = useState(0);
+
+  // Récupérer le nombre de quiz disponibles
+  useEffect(() => {
+    const fetchQuizzesCount = async () => {
+      try {
+        const res = await fetch("/api/quiz/count");
+        const data = await res.json();
+        setQuizzesCount(data.count || 0);
+      } catch (error) {
+        console.error("Erreur chargement nombre de quiz:", error);
+      }
+    };
+    fetchQuizzesCount();
+  }, []);
 
   if (session) {
     return (
@@ -56,13 +72,30 @@ export default function AuthButton() {
                 onClick={() => {
                   setShowMenu(false);
                   router.push(
-                    `/profile/${encodeURIComponent(session.user?.email || "")}`,
+                    `/profile/${encodeURIComponent(session.user?.email || "")}`
                   );
                 }}
                 className="flex items-center gap-2 w-full px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
               >
                 <FaUser className="w-4 h-4" />
                 Mon profil
+              </button>
+
+              {/* Quiz avec compteur */}
+              <button
+                onClick={() => {
+                  setShowMenu(false);
+                  router.push("/quiz");
+                }}
+                className="flex items-center gap-2 w-full px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors relative"
+              >
+                <FaCode className="w-4 h-4" />
+                Quiz
+                {quizzesCount > 0 && (
+                  <span className="ml-auto bg-red-500 text-white text-[10px] px-1.5 py-0.5 rounded-full">
+                    {quizzesCount}
+                  </span>
+                )}
               </button>
 
               {/* Messages */}
